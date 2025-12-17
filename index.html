@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOS Ultimate - Pro Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-overlay: rgba(0,0,0,0);
+            --font-scale: 1;
+            --sys-font: 'Segoe UI', system-ui, sans-serif;
+            --code-font: 'JetBrains Mono', monospace;
+            
+            --taskbar-bg: rgba(33, 37, 43, 0.85);
+            --window-bg: #282c34;
+            --titlebar-active: #3e4451;
+            --titlebar-inactive: #21252b;
+            --primary: #61afef;
+            --text: #abb2bf;
+        }
+
+        /* RESET E BASE */
+        * { box-sizing: border-box; outline: none; user-select: none; }
+        body {
+            margin: 0;
+            font-family: var(--sys-font);
+            font-size: calc(14px * var(--font-scale));
+            background-color: #000;
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* OVERLAY DE BRILHO */
+        #brightness-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-overlay); pointer-events: none; z-index: 99999;
+        }
+
+        /* DESKTOP */
+        #desktop {
+            position: absolute; top: 0; left: 0; width: 100%; height: calc(100vh - 40px);
+            background-size: cover; background-position: center;
+            transition: background-image 0.5s ease;
+        }
+
+        .desktop-icons-area {
+            display: flex; flex-direction: column; flex-wrap: wrap; 
+            height: 100%; padding: 10px; align-content: flex-start;
+        }
+
+        .icon {
+            width: 86px; margin: 5px; padding: 10px 5px; text-align: center;
+            border: 1px solid transparent; border-radius: 5px; cursor: pointer;
+            color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+            display: flex; flex-direction: column; align-items: center;
+            transition: 0.1s;
+        }
+        .icon:hover { background: rgba(255,255,255,0.1); }
+        .icon.selected { background: rgba(97, 175, 239, 0.3); border-color: rgba(97, 175, 239, 0.5); }
+        .icon-img { font-size: 36px; margin-bottom: 5px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+        .icon-text { font-size: 12px; line-height: 1.2; word-wrap: break-word; text-shadow: 1px 1px 2px #000; }
+
+        /* JANELAS */
+        .window {
+            position: absolute; background: var(--window-bg);
+            border: 1px solid #181a1f;
+            border-radius: 8px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column;
+            min-width: 300px; min-height: 200px;
+            overflow: hidden;
+            animation: popIn 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .window.active { border-color: #4b5363; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+
+        .title-bar {
+            height: 34px; background: var(--titlebar-inactive);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 10px; cursor: default; border-bottom: 1px solid #181a1f;
+        }
+        .window.active .title-bar { background: var(--titlebar-active); }
+        
+        .win-controls { display: flex; gap: 8px; }
+        .win-btn { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; transition: 0.2s; }
+        .win-btn:hover { filter: brightness(1.2); }
+        .close { background: #ff5f56; } .min { background: #ffbd2e; } .max { background: #27c93f; }
+
+        .win-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; background: #282c34; }
+
+        /* APP STYLES GERAIS */
+        button { cursor: pointer; }
+        
+        /* APP - PAINT */
+        .paint-toolbar { padding: 8px; background: #333842; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #181a1f; }
+        .color-picker { width: 25px; height: 25px; padding: 0; border: none; cursor: pointer; }
+        .paint-canvas-container { flex: 1; background: #555; overflow: auto; display: flex; justify-content: center; align-items: center; cursor: crosshair; }
+        #paint-canvas { background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+
+        /* APP - CAMERA */
+        .camera-container { display: flex; flex-direction: column; height: 100%; background: #000; }
+        .camera-view { flex: 1; width: 100%; object-fit: cover; background: #111; }
+        .camera-controls { height: 80px; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; gap: 20px; position: absolute; bottom: 0; width: 100%; }
+        .snap-btn { width: 60px; height: 60px; border-radius: 50%; border: 4px solid #fff; background: transparent; transition: 0.2s; }
+        .snap-btn:active { background: #fff; transform: scale(0.9); }
+
+        /* APP - EXPLORER */
+        .explorer-bar { padding: 8px; background: #21252b; color: #fff; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #181a1f; }
+        .path-input { flex: 1; padding: 5px 10px; font-size: 13px; border: 1px solid #3e4451; background: #2c313a; color: #fff; border-radius: 4px; }
+        .explorer-body { flex: 1; background: #fff; color: #333; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); grid-auto-rows: 100px; gap: 5px; overflow-y: auto; }
+        .file-item { display: flex; flex-direction: column; align-items: center; padding: 10px; cursor: pointer; border: 1px solid transparent; border-radius: 4px; }
+        .file-item:hover { background: #e8f4ff; border-color: #d1e8ff; }
+        .file-item.selected { background: #cce8ff; border-color: #99d1ff; }
+        .file-item span { text-align: center; font-size: 12px; margin-top: 5px; word-break: break-word; line-height: 1.2; }
+        
+        /* IMAGE PREVIEWER (dentro do explorer ou janela propria) */
+        .img-preview { display:flex; justify-content:center; align-items:center; height:100%; background:#1e1e1e; }
+        .img-preview img { max-width:100%; max-height:100%; object-fit:contain; }
+
+        /* APPS - EDITOR & TERMINAL */
+        .editor-area { flex: 1; background: #1e1e1e; color: #dcdcdc; border: none; padding: 15px; font-family: var(--code-font); resize: none; font-size: 14px; line-height: 1.5; }
+        .terminal { background: #0c0c0c; color: #ccc; font-family: 'Consolas', monospace; padding: 10px; height: 100%; overflow-y: auto; font-size: 14px; cursor: text; }
+        .cmd-input { background: transparent; border: none; color: #fff; font-family: inherit; font-size: inherit; width: 1px; opacity: 0; }
+
+        /* BARRA DE TAREFAS */
+        #taskbar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 40px;
+            background: var(--taskbar-bg); backdrop-filter: blur(10px);
+            display: flex; align-items: center; padding: 0 10px; z-index: 9000; border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        #start-btn { 
+            background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 4px; cursor: pointer; 
+            font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.2s; color: #fff;
+        }
+        #start-btn:hover { background: rgba(255,255,255,0.2); box-shadow: 0 0 15px var(--primary); }
+        .task-list { flex: 1; display: flex; margin: 0 10px; gap: 4px; overflow-x: auto; }
+        .task-item { 
+            padding: 5px 12px; background: rgba(255,255,255,0.05); border-radius: 3px; cursor: pointer; 
+            font-size: 12px; display: flex; align-items: center; max-width: 180px; height: 30px; 
+            transition: 0.2s; border-bottom: 2px solid transparent;
+        }
+        .task-item:hover { background: rgba(255,255,255,0.1); }
+        .task-item.active { border-bottom: 2px solid var(--primary); background: rgba(255,255,255,0.15); }
+        
+        /* MENU INICIAR */
+        #start-menu {
+            position: fixed; bottom: 50px; left: 10px; width: 280px; background: #21252b;
+            border: 1px solid #181a1f; border-radius: 8px; padding: 15px; display: none; flex-direction: column;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.6); z-index: 9001; 
+        }
+        .start-item { padding: 10px; display: flex; gap: 15px; align-items: center; cursor: pointer; border-radius: 6px; color: #dcdcdc; transition: 0.1s; }
+        .start-item:hover { background: var(--primary); color: #000; }
+
+        /* CONFIGS */
+        .settings-panel { padding: 25px; color: #fff; display: flex; flex-direction: column; gap: 20px; }
+        .setting-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary); }
+        .setting-input { padding: 8px; border-radius: 4px; border: 1px solid #4b5263; background: #282c34; color: #fff; width: 100%; }
+
+        /* CONTEXT MENU */
+        .context-menu { position: absolute; background: #2c313a; border: 1px solid #181a1f; padding: 5px 0; z-index: 9999; display: none; min-width: 180px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5); border-radius: 4px; }
+        .ctx-item { padding: 8px 15px; cursor: pointer; font-size: 13px; color: #dcdcdc; display: flex; justify-content: space-between; }
+        .ctx-item:hover { background: var(--primary); color: #000; }
+
+    </style>
+</head>
+<body>
+    <div id="brightness-overlay"></div>
+
+    <div id="desktop">
+        <div class="desktop-icons-area" id="desktop-icons"></div>
+    </div>
+
+    <div id="taskbar">
+        <div id="start-btn" onclick="toggleStart()">
+            <span style="color: #61afef">❖</span> Iniciar
+        </div>
+        <div class="task-list" id="task-list"></div>
+        <div id="clock" style="font-size: 12px; text-align: right; line-height: 1.3; cursor:default; min-width:80px;">
+            <div id="clock-time" style="font-weight:bold; color:#fff">00:00</div>
+            <div id="clock-date" style="color: #abb2bf;">01/01</div>
+        </div>
+    </div>
+
+    <div id="start-menu">
+        <div style="padding-bottom:10px; border-bottom:1px solid #333; margin-bottom:10px; font-weight:bold; font-size:16px;">Aplicativos</div>
+        <div id="start-apps"></div>
+        <div style="margin-top:20px; padding-top:10px; border-top:1px solid #333;">
+            <div class="start-item" onclick="location.reload()">⏻ Reiniciar Sistema</div>
+        </div>
+    </div>
+
+    <div id="context-menu" class="context-menu"></div>
+
+    <script>
+        // ==========================================
+        // 1. SISTEMA DE ARQUIVOS VIRTUAL
+        // ==========================================
+        const fsDefault = {
+            "root": {
+                "Desktop": {
+                    type: "folder",
+                    children: {
+                        "BemVindo.txt": { type: "file", content: "Bem vindo ao DevOS Pro!\nAgora com Paint e Câmera funcionando." },
+                        "Projetos": { type: "folder", children: {} }
+                    }
+                },
+                "Documentos": { type: "folder", children: {} },
+                "Imagens": { type: "folder", children: {} }, // Pasta para salvar fotos/desenhos
+                "Lixeira": { type: "folder", children: {} }
+            }
+        };
+
+        // Carregar do LocalStorage ou usar Default
+        let fileSystem = JSON.parse(localStorage.getItem('devos_pro_fs')) || fsDefault;
+        
+        // Configurações Default
+        let settings = JSON.parse(localStorage.getItem('devos_pro_settings')) || {
+            brightness: 0,
+            wallpaper: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072",
+            fontSize: 1
+        };
+
+        function saveFS() { 
+            try {
+                localStorage.setItem('devos_pro_fs', JSON.stringify(fileSystem)); 
+            } catch(e) {
+                alert("Disco Cheio! Não foi possível salvar (LocalStorage limit).");
+            }
+        }
+        function saveSettings() { localStorage.setItem('devos_pro_settings', JSON.stringify(settings)); applySettings(); }
+
+        function getFolder(pathArray) {
+            let current = fileSystem.root;
+            for(let p of pathArray) {
+                if(current.children && current.children[p]) current = current.children[p];
+                else return null;
+            }
+            return current;
+        }
+
+        // ==========================================
+        // 2. KERNEL E UI
+        // ==========================================
+        let windows = {};
+        let activeWin = null;
+        let zIndex = 100;
+
+        // REGISTRO DE APPS
+        const apps = {
+            explorer: { name: "Explorador", icon: "📁", action: () => openExplorer(["Desktop"]) },
+            editor: { name: "Dev Code", icon: "📝", action: () => openEditor() },
+            terminal: { name: "Terminal", icon: "💻", action: () => openTerminal() },
+            paint: { name: "Dev Paint", icon: "🎨", action: () => openPaint() },
+            camera: { name: "Câmera", icon: "📷", action: () => openCamera() },
+            browser: { name: "Navegador", icon: "🌐", action: () => openBrowser() },
+            settings: { name: "Configurações", icon: "⚙️", action: () => openSettings() },
+            snake: { name: "Snake", icon: "🐍", action: () => openSnake() }
+        };
+
+        function init() {
+            applySettings();
+            renderDesktop();
+            renderStartMenu();
+            setInterval(updateClock, 1000);
+            updateClock();
+            setupGlobalEvents();
+        }
+
+        function setupGlobalEvents() {
+            // Context Menu Global
+            document.addEventListener('contextmenu', e => {
+                if(e.target.closest('.window')) return; // Não abrir menu desktop se clicar em janela
+                e.preventDefault();
+                showContextMenu(e.clientX, e.clientY, [
+                    { label: "Atualizar", action: () => renderDesktop() },
+                    { label: "Novo Documento", action: () => createNewFileOnDesktop() },
+                    { label: "Nova Pasta", action: () => createNewFolderOnDesktop() },
+                    { label: "Alterar Papel de Parede", action: () => openSettings() }
+                ]);
+            });
+
+            document.addEventListener('click', () => document.getElementById('context-menu').style.display = 'none');
+            
+            // Drag Logic
+            document.addEventListener('mousemove', dragWindow);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function applySettings() {
+            // Aplica Brilho
+            const overlay = document.getElementById('brightness-overlay');
+            overlay.style.backgroundColor = `rgba(0,0,0,${settings.brightness/100})`;
+            
+            // Aplica Fonte
+            document.documentElement.style.setProperty('--font-scale', settings.fontSize);
+            
+            // Aplica Wallpaper
+            const desk = document.getElementById('desktop');
+            desk.style.backgroundImage = `url('${settings.wallpaper}')`;
+        }
+
+        function renderDesktop() {
+            const deskEl = document.getElementById('desktop-icons');
+            deskEl.innerHTML = '';
+            
+            // Ícones fixos
+            addIcon(deskEl, "Este Computador", "💻", () => openExplorer([]));
+            addIcon(deskEl, "Lixeira", "🗑️", () => openExplorer(["Lixeira"]));
+
+            // Arquivos
+            const deskFolder = fileSystem.root.Desktop.children;
+            Object.keys(deskFolder).forEach(name => {
+                const item = deskFolder[name];
+                let icon = '📄';
+                if(item.type === 'folder') icon = '📁';
+                if(item.type === 'img') icon = '🖼️';
+                if(item.type === 'exe') icon = '🚀';
+                
+                addIcon(deskEl, name, icon, () => openFileOrFolder(["Desktop"], name));
+            });
+        }
+
+        function addIcon(container, name, emoji, onClick) {
+            const div = document.createElement('div');
+            div.className = 'icon';
+            div.innerHTML = `<div class="icon-img">${emoji}</div><div class="icon-text">${name}</div>`;
+            div.onclick = (e) => { 
+                e.stopPropagation(); 
+                document.querySelectorAll('.icon').forEach(i => i.classList.remove('selected'));
+                div.classList.add('selected'); 
+            }
+            div.ondblclick = onClick;
+            container.appendChild(div);
+        }
+
+        function renderStartMenu() {
+            const list = document.getElementById('start-apps');
+            list.innerHTML = '';
+            Object.keys(apps).forEach(key => {
+                const app = apps[key];
+                const item = document.createElement('div');
+                item.className = 'start-item';
+                item.innerHTML = `<span style="font-size:20px">${app.icon}</span> ${app.name}`;
+                item.onclick = () => { toggleStart(); app.action(); };
+                list.appendChild(item);
+            });
+        }
+
+        function toggleStart() {
+            const menu = document.getElementById('start-menu');
+            const btn = document.getElementById('start-btn');
+            if (menu.style.display === 'flex') {
+                menu.style.display = 'none';
+                menu.style.animation = '';
+                btn.style.background = '';
+            } else {
+                menu.style.display = 'flex';
+                menu.style.animation = 'slideUp 0.15s ease-out';
+                btn.style.background = 'rgba(255,255,255,0.2)';
+            }
+        }
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('start-menu');
+            const btn = document.getElementById('start-btn');
+            if(!menu.contains(e.target) && !btn.contains(e.target)) {
+                menu.style.display = 'none';
+                btn.style.background = '';
+            }
+        });
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock-time').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('clock-date').innerText = now.toLocaleDateString();
+        }
+
+        // ==========================================
+        // 3. GERENCIADOR DE JANELAS
+        // ==========================================
+        function createWindow(title, icon, w, h, contentHTML) {
+            const id = 'win-' + Date.now() + Math.floor(Math.random()*1000);
+            const win = document.createElement('div');
+            win.className = 'window active';
+            win.id = id;
+            win.style.width = w + 'px';
+            win.style.height = h + 'px';
+            // Centralizar ou cascata
+            const offset = Object.keys(windows).length * 30;
+            win.style.left = Math.min(window.innerWidth - w, 50 + offset) + 'px';
+            win.style.top = Math.min(window.innerHeight - h, 50 + offset) + 'px';
+            win.style.zIndex = ++zIndex;
+
+            win.innerHTML = `
+                <div class="title-bar" onmousedown="startDrag(event, '${id}')">
+                    <div style="display:flex;align-items:center;gap:8px;font-size:12px; font-weight:600"><span>${icon}</span> ${title}</div>
+                    <div class="win-controls">
+                        <button class="win-btn min" title="Minimizar" onclick="minimize('${id}')"></button>
+                        <button class="win-btn max" title="Maximizar" onclick="maximize('${id}')"></button>
+                        <button class="win-btn close" title="Fechar" onclick="closeWindow('${id}')"></button>
+                    </div>
+                </div>
+                <div class="win-content" id="content-${id}">${contentHTML}</div>
+            `;
+
+            win.addEventListener('mousedown', () => focusWindow(id));
+            document.body.appendChild(win);
+            
+            // Taskbar Item
+            const taskItem = document.createElement('div');
+            taskItem.className = 'task-item active';
+            taskItem.id = 'task-' + id;
+            taskItem.innerHTML = `<span>${icon}</span> <span style="margin-left:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${title}</span>`;
+            taskItem.onclick = () => {
+                if(windows[id].minimized) restore(id);
+                else focusWindow(id);
+            };
+            document.getElementById('task-list').appendChild(taskItem);
+
+            windows[id] = { el: win, maximized: false, minimized: false, rect: null };
+            activeWin = id;
+            return { id: id, content: document.getElementById(`content-${id}`) };
+        }
+
+        function closeWindow(id) {
+            const w = windows[id].el;
+            w.style.transform = "scale(0.9)";
+            w.style.opacity = "0";
+            setTimeout(() => {
+                w.remove();
+                document.getElementById('task-' + id).remove();
+                delete windows[id];
+            }, 100);
+        }
+
+        function focusWindow(id) {
+            if(!windows[id]) return;
+            if(windows[id].minimized) restore(id);
+            
+            Object.values(windows).forEach(w => w.el.classList.remove('active'));
+            windows[id].el.classList.add('active');
+            windows[id].el.style.zIndex = ++zIndex;
+            activeWin = id;
+            
+            document.querySelectorAll('.task-item').forEach(t => t.classList.remove('active'));
+            document.getElementById('task-' + id).classList.add('active');
+        }
+
+        function minimize(id) {
+            windows[id].el.style.display = 'none';
+            windows[id].minimized = true;
+            document.getElementById('task-' + id).classList.remove('active');
+        }
+
+        function restore(id) {
+            windows[id].el.style.display = 'flex';
+            windows[id].minimized = false;
+            focusWindow(id);
+        }
+
+        function maximize(id) {
+            const win = windows[id].el;
+            if(!windows[id].maximized) {
+                windows[id].rect = { top: win.style.top, left: win.style.left, w: win.style.width, h: win.style.height };
+                win.style.top = '0'; win.style.left = '0'; win.style.width = '100%'; win.style.height = 'calc(100vh - 40px)';
+                win.style.borderRadius = '0';
+                windows[id].maximized = true;
+            } else {
+                const r = windows[id].rect;
+                win.style.top = r.top; win.style.left = r.left; win.style.width = r.w; win.style.height = r.h;
+                win.style.borderRadius = '8px';
+                windows[id].maximized = false;
+            }
+        }
+
+        // DRAG SYSTEM
+        let dragInfo = { dragging: false, id: null, offX: 0, offY: 0 };
+
+        function startDrag(e, id) {
+            if(windows[id].maximized || e.target.closest('.win-controls')) return;
+            dragInfo = { dragging: true, id: id, offX: e.clientX - windows[id].el.offsetLeft, offY: e.clientY - windows[id].el.offsetTop };
+            focusWindow(id);
+        }
+
+        function dragWindow(e) {
+            if(!dragInfo.dragging) return;
+            e.preventDefault();
+            const win = windows[dragInfo.id].el;
+            win.style.left = (e.clientX - dragInfo.offX) + 'px';
+            win.style.top = (e.clientY - dragInfo.offY) + 'px';
+        }
+
+        function stopDrag() { dragInfo.dragging = false; }
+
+
+        // ==========================================
+        // 4. APLICATIVOS (Lógica)
+        // ==========================================
+
+        // --- DEV PAINT ---
+        function openPaint() {
+            const { id, content } = createWindow("Dev Paint", "🎨", 700, 500, `
+                <div style="display:flex; flex-direction:column; height:100%;">
+                    <div class="paint-toolbar">
+                        <label style="color:#fff; font-size:12px;">Cor:</label>
+                        <input type="color" id="p-color-${id}" class="color-picker" value="#000000">
+                        <div style="width:1px; height:20px; background:#555; margin:0 5px;"></div>
+                        <label style="color:#fff; font-size:12px;">Tamanho:</label>
+                        <input type="range" id="p-size-${id}" min="1" max="50" value="5" style="width:80px">
+                        <div style="width:1px; height:20px; background:#555; margin:0 5px;"></div>
+                        <button class="editor-btn" id="p-clear-${id}">Limpar</button>
+                        <button class="editor-btn" id="p-save-${id}" style="margin-left:auto; background:#61afef; color:#000;">💾 Salvar</button>
+                    </div>
+                    <div class="paint-canvas-container">
+                        <canvas id="cvs-${id}" width="800" height="600"></canvas>
+                    </div>
+                </div>
+            `);
+
+            const canvas = document.getElementById(`cvs-${id}`);
+            const ctx = canvas.getContext('2d');
+            const colorIn = document.getElementById(`p-color-${id}`);
+            const sizeIn = document.getElementById(`p-size-${id}`);
+            
+            // Fundo Branco Inicial
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+
+            let painting = false;
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            }
+
+            canvas.addEventListener('mousedown', (e) => {
+                painting = true;
+                ctx.beginPath();
+                const p = getPos(e);
+                ctx.moveTo(p.x, p.y);
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if(!painting) return;
+                const p = getPos(e);
+                ctx.lineTo(p.x, p.y);
+                ctx.strokeStyle = colorIn.value;
+                ctx.lineWidth = sizeIn.value;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            });
+
+            window.addEventListener('mouseup', () => { painting = false; ctx.beginPath(); });
+            
+            // Botão Limpar
+            document.getElementById(`p-clear-${id}`).onclick = () => {
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0,0, canvas.width, canvas.height);
+            };
+
+            // Botão Salvar
+            document.getElementById(`p-save-${id}`).onclick = () => {
+                const name = prompt("Nome da Imagem:", "Desenho.png");
+                if(!name) return;
+                const data = canvas.toDataURL("image/png");
+                
+                // Salvar na pasta Imagens
+                fileSystem.root.Imagens.children[name] = { type: 'img', content: data };
+                saveFS();
+                alert(`Salvo em /Imagens/${name}`);
+            };
+        }
+
+        // --- CÂMERA ---
+        function openCamera() {
+            const { id } = createWindow("Câmera", "📷", 640, 520, `
+                <div class="camera-container">
+                    <video id="vid-${id}" class="camera-view" autoplay playsinline></video>
+                    <canvas id="cvs-cam-${id}" style="display:none;"></canvas>
+                    <div class="camera-controls">
+                        <button id="snap-${id}" class="snap-btn" title="Tirar Foto"></button>
+                    </div>
+                </div>
+            `);
+
+            const video = document.getElementById(`vid-${id}`);
+            
+            // Tentar acessar webcam
+            if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    windows[id].stream = stream; // guardar referencia para parar depois
+                })
+                .catch(err => {
+                    video.style.display = 'none';
+                    document.querySelector(`#content-${id} .camera-container`).innerHTML += 
+                        `<div style="color:white; text-align:center; padding:20px;">
+                            <h3>Erro ao acessar câmera</h3>
+                            <p>${err.message}</p>
+                            <p style="font-size:11px; color:#888;">Nota: A câmera requer HTTPS ou localhost.</p>
+                        </div>`;
+                });
+            } else {
+                alert("Seu navegador não suporta acesso à câmera.");
+            }
+
+            // Tirar Foto
+            document.getElementById(`snap-${id}`).onclick = () => {
+                const canvas = document.getElementById(`cvs-cam-${id}`);
+                const ctx = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0);
+                
+                // Flash effect
+                video.style.opacity = 0.5;
+                setTimeout(() => video.style.opacity = 1, 100);
+
+                // Save
+                const data = canvas.toDataURL("image/png");
+                const name = `Foto_${Date.now()}.png`;
+                fileSystem.root.Imagens.children[name] = { type: 'img', content: data };
+                saveFS();
+                
+                // Notificação visual
+                alert("Foto salva na pasta Imagens!");
+            };
+
+            // Hook para desligar a camera ao fechar a janela
+            const oldClose = document.querySelector(`#${id} .close`).onclick;
+            document.querySelector(`#${id} .close`).onclick = () => {
+                if(windows[id].stream) {
+                    windows[id].stream.getTracks().forEach(track => track.stop());
+                }
+                closeWindow(id);
+            }
+        }
+
+        // --- EXPLORER ---
+        function openExplorer(path = []) {
+            const { id } = createWindow("Explorador", "📁", 600, 400, `
+                <div class="explorer-bar">
+                    <button class="editor-btn" onclick="navUp('${id}')">⬆ Voltar</button>
+                    <input class="path-input" id="path-${id}" value="Root/${path.join('/')}" readonly>
+                </div>
+                <div class="explorer-body" id="exp-body-${id}"></div>
+            `);
+            windows[id].path = path || [];
+            refreshExplorer(id);
+        }
+
+        function refreshExplorer(id) {
+            const path = windows[id].path;
+            const folder = getFolder(path);
+            const container = document.getElementById(`exp-body-${id}`);
+            document.getElementById(`path-${id}`).value = path.length ? path.join('/') : "Este Computador";
+            container.innerHTML = '';
+
+            if(!path.length) {
+                // Root view
+                ['Desktop', 'Documentos', 'Imagens', 'Lixeira'].forEach(k => renderFileItem(container, k, 'folder', id));
+                return;
+            }
+
+            if(!folder || !folder.children) return;
+
+            const sortedKeys = Object.keys(folder.children).sort();
+
+            if(sortedKeys.length === 0) {
+                container.innerHTML = '<div style="color:#777; width:100%; text-align:center; grid-column:1/-1; padding-top:20px;">Pasta Vazia</div>';
+            }
+
+            sortedKeys.forEach(name => {
+                const item = folder.children[name];
+                renderFileItem(container, name, item.type, id);
+            });
+        }
+
+        function renderFileItem(container, name, type, winId) {
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            let icon = '📄';
+            if(type === 'folder') icon = '📁';
+            if(type === 'exe') icon = '🚀';
+            if(type === 'img') icon = '🖼️';
+
+            div.innerHTML = `<div style="font-size:32px">${icon}</div><span>${name}</span>`;
+            
+            div.onclick = () => {
+                container.querySelectorAll('.file-item').forEach(x => x.classList.remove('selected'));
+                div.classList.add('selected');
+            };
+
+            div.ondblclick = () => openFileOrFolder(windows[winId].path, name, winId);
+            
+            div.oncontextmenu = (e) => {
+                e.stopPropagation(); e.preventDefault();
+                showContextMenu(e.clientX, e.clientY, [
+                    { label: "Abrir", action: () => openFileOrFolder(windows[winId].path, name, winId) },
+                    { label: "Deletar", action: () => { 
+                        if(confirm(`Deletar ${name}?`)) {
+                            delete fileSystem.root[windows[winId].path[0]].children[name]; // Simplificação: deleta direto
+                            saveFS(); refreshExplorer(winId); renderDesktop();
+                        }
+                    }}
+                ]);
+            };
+            container.appendChild(div);
+        }
+
+        function openFileOrFolder(currentPath, name, winId) {
+            if(currentPath.length === 0) {
+                // Estamos na raiz virtual
+                if(winId) {
+                    windows[winId].path.push(name);
+                    refreshExplorer(winId);
+                }
+                return;
+            }
+
+            const folder = getFolder(currentPath);
+            const item = folder.children[name];
+
+            if (item.type === 'folder') {
+                if(winId) {
+                    windows[winId].path.push(name);
+                    refreshExplorer(winId);
+                }
+            } else if (item.type === 'file') {
+                openEditor(item.content, currentPath, name);
+            } else if (item.type === 'img') {
+                openImageViewer(name, item.content);
+            } else if (item.type === 'exe') {
+                // Tenta mapear o exe para um app interno
+                if(name.includes("Snake")) openSnake();
+                else alert("Executável não assinado.");
+            }
+        }
+
+        function navUp(id) {
+            if(windows[id].path.length > 0) {
+                windows[id].path.pop();
+                refreshExplorer(id);
+            }
+        }
+
+        function openImageViewer(title, src) {
+            createWindow(title, "🖼️", 500, 400, `
+                <div class="img-preview">
+                    <img src="${src}" />
+                </div>
+            `);
+        }
+
+        // --- EDITOR DE CÓDIGO ---
+        function openEditor(content = "", pathArr = null, fileName = null) {
+            const { id } = createWindow(fileName || "Sem Título", "📝", 600, 450, `
+                <div style="display:flex; flex-direction:column; height:100%;">
+                    <div class="editor-toolbar">
+                        <button class="editor-btn" id="save-${id}">💾 Salvar</button>
+                    </div>
+                    <textarea class="editor-area" id="edit-${id}" spellcheck="false">${content}</textarea>
+                </div>
+            `);
+            windows[id].filePath = pathArr;
+            windows[id].fileName = fileName;
+
+            document.getElementById(`save-${id}`).onclick = () => {
+                const txt = document.getElementById(`edit-${id}`).value;
+                let name = windows[id].fileName;
+                let path = windows[id].filePath;
+
+                if(!name) {
+                    name = prompt("Nome do arquivo (ex: notas.txt):");
+                    if(!name) return;
+                    path = ["Desktop"];
+                }
+
+                // Acha a pasta
+                let targetFolder = getFolder(path);
+                if(targetFolder) {
+                    targetFolder.children[name] = { type: 'file', content: txt };
+                    saveFS();
+                    renderDesktop();
+                    alert("Arquivo salvo!");
+                    // Atualiza titulo da janela
+                    windows[id].fileName = name;
+                    windows[id].filePath = path;
+                    document.querySelector(`#${id} .title-bar span`).nextSibling.textContent = " " + name;
+                }
+            };
+        }
+
+        // --- NAVEGADOR ---
+        function openBrowser() {
+            createWindow("Google Chrome", "🌐", 850, 600, `
+                <div style="display:flex; flex-direction:column; height:100%; background:#fff;">
+                    <div style="padding:8px; background:#f1f3f4; display:flex; gap:10px; align-items:center; border-bottom:1px solid #ddd;">
+                        <button class="editor-btn" style="color:#555; background:transparent;">◀</button>
+                        <button class="editor-btn" style="color:#555; background:transparent;">▶</button>
+                        <button class="editor-btn" style="color:#555; background:transparent;">↻</button>
+                        <input type="text" id="url-bar" value="https://bing.com" style="flex:1; padding:6px 15px; border-radius:20px; border:1px solid #ccc; background:#e8eaed; outline:none; font-size:14px;">
+                    </div>
+                    <iframe id="browser-frame" style="flex:1; border:none;" src="https://www.bing.com/search?q=devos"></iframe>
+                </div>
+            `);
+            // Nota: Google bloqueia iframe. Bing ou Wikipedia geralmente funcionam.
+        }
+
+        // --- TERMINAL ---
+        function openTerminal() {
+            const { id } = createWindow("Terminal", "💻", 550, 350, `
+                <div class="terminal" id="term-${id}" onclick="document.getElementById('in-${id}').focus()">
+                    <div id="out-${id}">
+                        <div>DevOS [versão 3.0.0]</div>
+                        <div>(c) Dev Corporation. Todos os direitos reservados.</div>
+                        <br>
+                    </div>
+                    <div style="display:flex;">
+                        <span class="path" style="color:#98c379">root@devos</span>:<span style="color:#61afef">~</span>$ &nbsp;
+                        <input id="in-${id}" class="cmd-input" type="text" autocomplete="off">
+                        <span id="ghost-${id}"></span><span style="animation:blink 1s infinite; background:#fff; width:8px; height:16px; display:inline-block; vertical-align:middle"></span>
+                    </div>
+                </div>
+            `);
+
+            const input = document.getElementById(`in-${id}`);
+            const ghost = document.getElementById(`ghost-${id}`);
+            const output = document.getElementById(`out-${id}`);
+
+            input.oninput = () => ghost.innerText = input.value;
+            input.focus();
+
+            input.addEventListener('keydown', (e) => {
+                if(e.key === 'Enter') {
+                    const cmdRaw = input.value.trim();
+                    output.innerHTML += `<div><span style="color:#98c379">root@devos</span>:<span style="color:#61afef">~</span>$ ${cmdRaw}</div>`;
+                    
+                    if(cmdRaw) {
+                        const parts = cmdRaw.split(' ');
+                        const cmd = parts[0].toLowerCase();
+                        const args = parts.slice(1);
+                        
+                        let resp = "";
+                        switch(cmd) {
+                            case 'help': resp = "Comandos: ls, clear, echo, date, whoami, reboot, open [app]"; break;
+                            case 'clear': output.innerHTML = ''; break;
+                            case 'date': resp = new Date().toString(); break;
+                            case 'whoami': resp = "root"; break;
+                            case 'reboot': location.reload(); break;
+                            case 'echo': resp = args.join(' '); break;
+                            case 'ls': 
+                                const folder = getFolder(["Desktop"]);
+                                resp = Object.keys(folder.children).join('  ');
+                                break;
+                            case 'open':
+                                if(apps[args[0]]) { apps[args[0]].action(); resp = "Iniciando " + args[0] + "..."; }
+                                else resp = "App não encontrado. Tente: paint, camera, browser";
+                                break;
+                            default: resp = `Comando '${cmd}' não encontrado.`;
+                        }
+                        if(resp) output.innerHTML += `<div style="color:#abb2bf; margin-bottom:10px">${resp}</div>`;
+                    } else {
+                        output.innerHTML += "<br>";
+                    }
+
+                    input.value = '';
+                    ghost.innerText = '';
+                    document.getElementById(`term-${id}`).scrollTop = document.getElementById(`term-${id}`).scrollHeight;
+                }
+            });
+        }
+
+        // --- SNAKE ---
+        function openSnake() {
+            const { id } = createWindow("Snake Game", "🐍", 420, 460, `
+                 <div style="background:#000; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <canvas id="snake-${id}" width="400" height="400" style="border:2px solid #333; box-shadow:0 0 20px rgba(0,255,0,0.2)"></canvas>
+                    <div style="color:#0f0; margin-top:5px; font-family:monospace">Use Setas para Mover</div>
+                 </div>
+            `);
+            
+            setTimeout(() => {
+                const cvs = document.getElementById(`snake-${id}`);
+                if(!cvs) return;
+                const ctx = cvs.getContext('2d');
+                let x=10, y=10, ax=15, ay=15, xv=0, yv=0, trail=[], tail=5;
+                
+                const loop = setInterval(() => {
+                    if(!document.getElementById(id)) return clearInterval(loop);
+                    
+                    x += xv; y += yv;
+                    if(x<0) x=19; if(x>19) x=0; if(y<0) y=19; if(y>19) y=0;
+                    
+                    ctx.fillStyle='#000'; ctx.fillRect(0,0,400,400);
+                    
+                    ctx.fillStyle='#0f0';
+                    for(let i=0; i<trail.length; i++) {
+                        ctx.fillRect(trail[i].x*20, trail[i].y*20, 18, 18);
+                        if(trail[i].x==x && trail[i].y==y) tail=5;
+                    }
+                    
+                    trail.push({x:x, y:y});
+                    while(trail.length > tail) trail.shift();
+                    
+                    if(ax==x && ay==y) {
+                        tail++;
+                        ax=Math.floor(Math.random()*20);
+                        ay=Math.floor(Math.random()*20);
+                    }
+                    
+                    ctx.fillStyle='#f00'; ctx.fillRect(ax*20, ay*20, 18, 18);
+                }, 1000/12);
+
+                document.addEventListener('keydown', e => {
+                    if(!windows[id].el.classList.contains('active')) return;
+                    if(e.key=='ArrowLeft' && xv!=1) {xv=-1;yv=0;}
+                    if(e.key=='ArrowUp' && yv!=1) {xv=0;yv=-1;}
+                    if(e.key=='ArrowRight' && xv!=-1) {xv=1;yv=0;}
+                    if(e.key=='ArrowDown' && yv!=-1) {xv=0;yv=1;}
+                });
+            }, 100);
+        }
+
+        // --- CONFIGURAÇÕES ---
+        function openSettings() {
+            const { id } = createWindow("Configurações", "⚙️", 450, 400, `
+                <div class="settings-panel">
+                    <div class="setting-group">
+                        <label>Brilho da Tela</label>
+                        <input type="range" min="0" max="80" value="${settings.brightness}" 
+                        oninput="settings.brightness=this.value; applySettings();"
+                        onchange="saveSettings()">
+                    </div>
+                    <div class="setting-group">
+                        <label>Escala da Fonte</label>
+                        <select class="setting-input" onchange="settings.fontSize=this.value; saveSettings();">
+                            <option value="0.85" ${settings.fontSize==0.85?'selected':''}>Pequena</option>
+                            <option value="1" ${settings.fontSize==1?'selected':''}>Normal</option>
+                            <option value="1.15" ${settings.fontSize==1.15?'selected':''}>Grande</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>URL do Papel de Parede</label>
+                        <input type="text" class="setting-input" value="${settings.wallpaper}" 
+                        onchange="settings.wallpaper=this.value; saveSettings();">
+                        <div style="font-size:11px; color:#888; margin-top:5px;">Cole um link de imagem (ex: Unsplash)</div>
+                    </div>
+                    <button class="editor-btn" onclick="resetSettings()">Restaurar Padrões</button>
+                </div>
+            `);
+        }
+
+        window.resetSettings = function() {
+            localStorage.removeItem('devos_pro_settings');
+            location.reload();
+        }
+
+        // UTILITÁRIOS
+        function showContextMenu(x, y, items) {
+            const ctx = document.getElementById('context-menu');
+            ctx.style.display = 'block';
+            
+            // Boundary Check
+            if(x + 180 > window.innerWidth) x -= 180;
+            if(y + (items.length*35) > window.innerHeight) y -= (items.length*35);
+
+            ctx.style.left = x + 'px';
+            ctx.style.top = y + 'px';
+            ctx.innerHTML = '';
+            
+            items.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'ctx-item';
+                el.innerText = item.label;
+                el.onclick = () => { item.action(); ctx.style.display = 'none'; };
+                ctx.appendChild(el);
+            });
+        }
+
+        function createNewFileOnDesktop() {
+            const name = prompt("Nome do Arquivo:", "Novo.txt");
+            if(name) {
+                fileSystem.root.Desktop.children[name] = { type: 'file', content: '' };
+                saveFS(); renderDesktop();
+            }
+        }
+        function createNewFolderOnDesktop() {
+            const name = prompt("Nome da Pasta:", "Nova Pasta");
+            if(name) {
+                fileSystem.root.Desktop.children[name] = { type: 'folder', children: {} };
+                saveFS(); renderDesktop();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
