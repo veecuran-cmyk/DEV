@@ -382,7 +382,7 @@
         // 3. GERENCIADOR DE JANELAS
         // ==========================================
         function createWindow(title, icon, w, h, contentHTML) {
-            const id = 'win-' + Date.now() + Math.floor(Math.random()*1000);
+            const id = 'win-' + Math.random().toString(36).substr(2, 9);
             const win = document.createElement('div');
             win.className = 'window active';
             win.id = id;
