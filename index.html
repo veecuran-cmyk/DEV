@@ -382,21 +382,24 @@
         // 3. GERENCIADOR DE JANELAS
         // ==========================================
         function createWindow(title, icon, w, h, contentHTML) {
-            const id = 'win-' + Date.now() + Math.floor(Math.random()*1000);
-            const win = document.createElement('div');
-            win.className = 'window active';
-            win.id = id;
-            win.style.width = w + 'px';
-            win.style.height = h + 'px';
-            // Centralizar ou cascata
-            const offset = Object.keys(windows).length * 30;
-            win.style.left = Math.min(window.innerWidth - w, 50 + offset) + 'px';
-            win.style.top = Math.min(window.innerHeight - h, 50 + offset) + 'px';
-            win.style.zIndex = ++zIndex;
+    const id = 'win-' + Date.now() + Math.floor(Math.random() * 1000);
+    const win = document.createElement('div');
+    win.className = 'window active';
+    win.id = id;
+    
+    // Configurações de estilo
+    win.style.width = w + 'px';
+    win.style.height = h + 'px';
+    const offset = Object.keys(windows).length * 30;
+    win.style.left = Math.min(window.innerWidth - w, 50 + offset) + 'px';
+    win.style.top = Math.min(window.innerHeight - h, 50 + offset) + 'px';
+    win.style.zIndex = ++zIndex;
 
-            win.innerHTML = `
+    win.innerHTML = `
         <div class="title-bar" onmousedown="startDrag(event, '${id}')">
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px; font-weight:600"><span>${icon}</span> ${title}</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px; font-weight:600">
+                <span>${icon}</span> ${title}
+            </div>
             <div class="win-controls">
                 <button class="win-btn min" onclick="minimize('${id}')"></button>
                 <button class="win-btn max" onclick="maximize('${id}')"></button>
@@ -406,24 +409,25 @@
         <div class="win-content" id="content-${id}">${contentHTML}</div>
     `;
 
-            win.addEventListener('mousedown', () => focusWindow(id));
-            document.body.appendChild(win);
-            
-            // Taskbar Item
-            const taskItem = document.createElement('div');
-            taskItem.className = 'task-item active';
-            taskItem.id = 'task-' + id;
-            taskItem.innerHTML = `<span>${icon}</span> <span style="margin-left:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${title}</span>`;
-            taskItem.onclick = () => {
-                if(windows[id].minimized) restore(id);
-                else focusWindow(id);
-            };
-            document.getElementById('task-list').appendChild(taskItem);
+    win.addEventListener('mousedown', () => focusWindow(id));
+    document.body.appendChild(win);
+    
+    // Taskbar Item
+    const taskItem = document.createElement('div');
+    taskItem.className = 'task-item active';
+    taskItem.id = 'task-' + id;
+    taskItem.innerHTML = `<span>${icon}</span> <span style="margin-left:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${title}</span>`;
+    taskItem.onclick = () => {
+        if(windows[id].minimized) restore(id);
+        else focusWindow(id);
+    };
+    document.getElementById('task-list').appendChild(taskItem);
 
-            windows[id] = { el: win, maximized: false, minimized: false, rect: null };
-            activeWin = id;
-           return { id: id, content: document.getElementById(`content-${id}`) };
-        } 
+    windows[id] = { el: win, maximized: false, minimized: false, rect: null };
+    focusWindow(id); // Garante que a nova janela seja a ativa
+    
+    return { id: id, content: document.getElementById(`content-${id}`) };
+        }
         function closeWindow(id) {
             const w = windows[id].el;
             w.style.transform = "scale(0.9)";
@@ -812,69 +816,57 @@
 
         // --- TERMINAL ---
         function openTerminal() {
-            const { id } = createWindow("Terminal", "💻", 550, 350, `
-                <div class="terminal" id="term-${id}" onclick="document.getElementById('in-${id}').focus()">
-                    <div id="out-${id}">
-                        <div>DevOS [versão 3.0.0]</div>
-                        <div>(c) Dev Corporation. Todos os direitos reservados.</div>
-                        <br>
-                    </div>
-                    <div style="display:flex;">
-                        <span class="path" style="color:#98c379">root@devos</span>:<span style="color:#61afef">~</span>$ &nbsp;
-                        <input id="in-${id}" class="cmd-input" type="text" autocomplete="off">
-                        <span id="ghost-${id}"></span><span style="animation:blink 1s infinite; background:#fff; width:8px; height:16px; display:inline-block; vertical-align:middle"></span>
-                    </div>
-                </div>
-            `);
+    const { id } = createWindow("Terminal", "💻", 550, 350, `
+        <div class="terminal" id="term-${id}" onclick="document.getElementById('in-${id}').focus()">
+            <div id="out-${id}">
+                <div>DevOS [versão 3.0.0]</div>
+                <div>(c) Dev Corporation. Todos os direitos reservados.</div>
+                <br>
+            </div>
+            <div style="display:flex;">
+                <span class="path" style="color:#98c379">root@devos</span>:<span style="color:#61afef">~</span>$ &nbsp;
+                <input id="in-${id}" class="cmd-input" type="text" autocomplete="off">
+                <span id="ghost-${id}"></span><span style="animation:blink 1s infinite; background:#fff; width:8px; height:16px; display:inline-block; vertical-align:middle"></span>
+            </div>
+        </div>
+    `);
 
-            setTimeout(() => {
-        const winEl = document.getElementById(winObj.id);
-        const input = winEl.querySelector('#in-prompt');
-        if(input) input.focus();
-    }, 100);
-            input.oninput = () => ghost.innerText = input.value;
-            input.focus();
+    const input = document.getElementById(`in-${id}`);
+    const output = document.getElementById(`out-${id}`);
+    const ghost = document.getElementById(`ghost-${id}`);
+    const termDiv = document.getElementById(`term-${id}`);
 
-            input.addEventListener('keydown', (e) => {
-                if(e.key === 'Enter') {
-                    const cmdRaw = input.value.trim();
-                    output.innerHTML += `<div><span style="color:#98c379">root@devos</span>:<span style="color:#61afef">~</span>$ ${cmdRaw}</div>`;
-                    
-                    if(cmdRaw) {
-                        const parts = cmdRaw.split(' ');
-                        const cmd = parts[0].toLowerCase();
-                        const args = parts.slice(1);
-                        
-                        let resp = "";
-                        switch(cmd) {
-                            case 'help': resp = "Comandos: ls, clear, echo, date, whoami, reboot, open [app]"; break;
-                            case 'clear': output.innerHTML = ''; break;
-                            case 'date': resp = new Date().toString(); break;
-                            case 'whoami': resp = "root"; break;
-                            case 'reboot': location.reload(); break;
-                            case 'echo': resp = args.join(' '); break;
-                            case 'ls': 
-                                const folder = getFolder(["Desktop"]);
-                                resp = Object.keys(folder.children).join('  ');
-                                break;
-                            case 'open':
-                                if(apps[args[0]]) { apps[args[0]].action(); resp = "Iniciando " + args[0] + "..."; }
-                                else resp = "App não encontrado. Tente: paint, camera, browser";
-                                break;
-                            default: resp = `Comando '${cmd}' não encontrado.`;
-                        }
-                        if(resp) output.innerHTML += `<div style="color:#abb2bf; margin-bottom:10px">${resp}</div>`;
-                    } else {
-                        output.innerHTML += "<br>";
-                    }
+    input.focus();
+    input.oninput = () => ghost.innerText = input.value;
 
-                    input.value = '';
-                    ghost.innerText = '';
-                    document.getElementById(`term-${id}`).scrollTop = document.getElementById(`term-${id}`).scrollHeight;
+    input.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') {
+            const cmdRaw = input.value.trim();
+            output.innerHTML += `<div><span style="color:#98c379">root@devos</span>:<span style="color:#61afef">~</span>$ ${cmdRaw}</div>`;
+            
+            if(cmdRaw) {
+                const parts = cmdRaw.split(' ');
+                const cmd = parts[0].toLowerCase();
+                const args = parts.slice(1);
+                let resp = "";
+
+                switch(cmd) {
+                    case 'help': resp = "ls, clear, echo, date, whoami, reboot, open [app]"; break;
+                    case 'clear': output.innerHTML = ''; break;
+                    case 'date': resp = new Date().toString(); break;
+                    case 'ls': resp = Object.keys(fileSystem.root.Desktop.children).join('  '); break;
+                    case 'echo': resp = args.join(' '); break;
+                    case 'reboot': location.reload(); break;
+                    default: resp = `Comando '${cmd}' não reconhecido.`;
                 }
-            });
+                if(resp) output.innerHTML += `<div style="color:#abb2bf; margin-bottom:10px">${resp}</div>`;
+            }
+            input.value = '';
+            ghost.innerText = '';
+            termDiv.scrollTop = termDiv.scrollHeight;
         }
-
+    });
+}
         // --- SNAKE ---
         function openSnake() {
             const { id } = createWindow("Snake Game", "🐍", 420, 460, `
@@ -925,7 +917,7 @@
                 });
             }, 100);
         }
-
+        
         // --- CONFIGURAÇÕES ---
         function openSettings() {
             const { id } = createWindow("Configurações", "⚙️", 450, 400, `
