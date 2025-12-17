@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #61afef;
+            --bg: #282c34;
+            --taskbar: rgba(33, 37, 43, 0.9);
+            --win-bg: rgba(40, 44, 52, 0.98);
+            --font-ui: 'Segoe UI', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --brightness: 100%;
+        }
+
+        * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+        body, html { margin: 0; padding: 0; height: 100vh; overflow: hidden; background: #000; font-family: var(--font-ui); }
+
+        /* TELA DE BOOT */
+        #boot-screen {
+            position: fixed; inset: 0; background: #000; z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--primary); font-family: var(--font-code);
+        }
+        .loader {
+            width: 200px; height: 4px; background: #222; margin-top: 20px;
+            border-radius: 10px; overflow: hidden;
+        }
+        .progress { width: 0%; height: 100%; background: var(--primary); transition: width 0.3s; }
+
+        /* AMBIENTE DESKTOP */
+        #desktop {
+            width: 100%; height: calc(100vh - 45px);
+            background: url('https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=2070') no-repeat center/cover;
+            position: relative; filter: brightness(var(--brightness));
+        }
+
+        /* ICONES */
+        .icon {
+            position: absolute; width: 85px; padding: 10px 5px; text-align: center;
+            display: flex; flex-direction: column; align-items: center; cursor: pointer;
+            color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.8); border: 1px solid transparent;
+        }
+        .icon:hover { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .icon.selected { background: rgba(97, 175, 239, 0.3); border: 1px solid var(--primary); }
+        .icon-img { font-size: 32px; margin-bottom: 5px; pointer-events: none; }
+        .icon-label { font-size: 12px; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+
+        /* JANELAS */
+        .window {
+            position: absolute; background: var(--win-bg); border: 1px solid #444;
+            border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column; min-width: 300px; min-height: 200px;
+            backdrop-filter: blur(10px);
+        }
+        .title-bar {
+            height: 38px; background: #21252b; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 12px; cursor: move;
+            border-bottom: 1px solid #333; border-radius: 8px 8px 0 0;
+        }
+        .win-title { color: #abb2bf; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .win-controls { display: flex; gap: 8px; }
+        .win-btn { width: 14px; height: 14px; border-radius: 50%; border: none; cursor: pointer; transition: 0.2s; }
+        .close { background: #ff5f56; } .close:hover { background: #ff2a1f; }
+        .min { background: #ffbd2e; }
+        .max { background: #27c93f; }
+
+        .win-content { flex: 1; overflow: auto; color: #fff; position: relative; }
+
+        /* BARRA DE TAREFAS */
+        #taskbar {
+            height: 45px; background: var(--taskbar); backdrop-filter: blur(20px);
+            position: fixed; bottom: 0; width: 100%; display: flex; align-items: center;
+            padding: 0 10px; z-index: 9999; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        #start-btn {
+            padding: 5px 15px; background: rgba(255,255,255,0.1); border-radius: 4px;
+            color: white; cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        #start-btn:hover { background: var(--primary); color: #21252b; }
+
+        /* PROGRAMAS ESPECÍFICOS */
+        /* Terminal */
+        .term-out { font-family: var(--font-code); padding: 15px; color: #98c379; font-size: 14px; }
+        .term-input-line { display: flex; gap: 10px; padding: 0 15px 15px; }
+        .term-input { background: transparent; border: none; color: white; flex: 1; font-family: var(--font-code); outline: none; }
+
+        /* Paint */
+        .paint-ui { display: flex; flex-direction: column; height: 100%; background: #eee; }
+        .paint-tools { background: #333; padding: 10px; display: flex; gap: 15px; align-items: center; }
+        canvas { background: white; cursor: crosshair; touch-action: none; }
+
+        /* Navegador */
+        .browser-ui { display: flex; flex-direction: column; height: 100%; background: #fff; }
+        .nav-bar { padding: 8px; background: #f1f3f4; display: flex; gap: 10px; border-bottom: 1px solid #ccc; }
+        .nav-bar input { flex: 1; border-radius: 20px; border: 1px solid #ccc; padding: 5px 15px; }
+
+        /* Configurações */
+        .settings-grid { padding: 25px; display: grid; gap: 20px; }
+        .setting-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; }
+
+        /* Start Menu */
+        #start-menu {
+            position: fixed; bottom: 50px; left: 10px; width: 350px; height: 500px;
+            background: #21252b; border: 1px solid #444; border-radius: 12px;
+            display: none; flex-direction: column; overflow: hidden; z-index: 10000;
+        }
+
+        /* Notificação */
+        #toast {
+            position: fixed; top: 20px; right: -300px; background: var(--win-bg);
+            border-left: 5px solid var(--primary); padding: 15px; border-radius: 4px;
+            transition: 0.5s; color: white; z-index: 100000;
+        }
+        #toast.show { right: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="boot-screen">
+        <h2 style="letter-spacing: 5px;">DEV</h2>
+        <div class="loader"><div class="progress" id="boot-progress"></div></div>
+        <p id="boot-status" style="font-size: 12px; margin-top: 10px;">Iniciando Kernel...</p>
+    </div>
+
+    <div id="desktop"></div>
+
+    <div id="start-menu">
+        <div style="padding: 20px; background: rgba(0,0,0,0.2);">
+            <h3 style="margin: 0; color: white;">Dev</h3>
+            <small style="color: var(--primary);">Versão 2.5.0-Stable</small>
+        </div>
+        <div id="start-apps-list" style="padding: 10px; flex: 1; overflow-y: auto;"></div>
+        <div style="padding: 10px; border-top: 1px solid #333; display: flex; justify-content: space-between;">
+            <button onclick="systemShutdown()" style="background:none; border:none; color:#e06c75; cursor:pointer;">⏻ Desligar</button>
+            <button onclick="location.reload()" style="background:none; border:none; color:#abb2bf; cursor:pointer;">↻ Reiniciar</button>
+        </div>
+    </div>
+
+    <div id="taskbar">
+        <div id="start-btn">❖ INICIAR</div>
+        <div id="task-icons" style="display:flex; margin-left:15px; gap:8px;"></div>
+        <div id="sys-clock" style="margin-left:auto; color:white; font-size:13px; font-weight:600;">00:00:00</div>
+    </div>
+
+    <div id="toast">
+        <b id="toast-title"></b>
+        <div id="toast-msg"></div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÕES GLOBAIS
+        const sysConfig = {
+            brightness: 100,
+            wallpaper: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=2070',
+            font: 'Segoe UI'
+        };
+
+        const apps = [
+            { id: 'explorer', name: 'Arquivos', icon: '📁' },
+            { id: 'browser', name: 'Navegador', icon: '🌐' },
+            { id: 'terminal', name: 'Terminal', icon: '🐚' },
+            { id: 'paint', name: 'Paint Pro', icon: '🎨' },
+            { id: 'camera', name: 'Câmera', icon: '📷' },
+            { id: 'gallery', name: 'Galeria', icon: '🖼️' },
+            { id: 'notes', name: 'Notas', icon: '📝' },
+            { id: 'player', name: 'Music Player', icon: '🎵' },
+            { id: 'settings', name: 'Configurações', icon: '⚙️' }
+        ];
+
+        // SISTEMA DE ARQUIVOS (Simulado)
+        let fs = JSON.parse(localStorage.getItem('devos_fs')) || [
+            { name: 'Bem-vindo.txt', content: 'Olá, usuário! Você acaba de iniciar o ambiente de desktop \nmais avançado baseado em navegador. Este sistema foi\n projetado para oferecer uma experiência completa de \ncomputação diretamente no seu browser.', type: 'text' },
+            { name: 'Foto_Exemplo.jpg', content: 'https://images.unsplash.com/photo-1518770660439-4636190af475', type: 'image' },
+            { name: 'Musica.mp3', content: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', type: 'audio' }
+        ];
+
+        let zIndex = 100;
+
+        // --- BOOT SEQUENCE ---
+        window.onload = () => {
+            const progress = document.getElementById('boot-progress');
+            const status = document.getElementById('boot-status');
+            const steps = ["Carregando Drivers...", "Iniciando UI...", "Montando Discos...", "Pronto!"];
+            let p = 0;
+
+            const interval = setInterval(() => {
+                p += Math.random() * 15;
+                if (p >= 100) {
+                    p = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('boot-screen').style.display = 'none';
+                        initSystem();
+                    }, 500);
+                }
+                progress.style.width = p + '%';
+                status.innerText = steps[Math.floor((p/100) * steps.length)] || "Concluindo...";
+            }, 150);
+        };
+
+        function initSystem() {
+            renderDesktop();
+            renderStartMenu();
+            updateClock();
+            setInterval(updateClock, 1000);
+            notify("Sistema Pronto", "Dev iniciado com sucesso.");
+        }
+
+        // --- CORE UI FUNCTIONS ---
+        function renderDesktop() {
+            const desk = document.getElementById('desktop');
+            desk.innerHTML = '';
+            apps.forEach((app, i) => {
+                const icon = document.createElement('div');
+                icon.className = 'icon';
+                icon.style.left = '20px';
+                icon.style.top = (20 + i * 95) + 'px';
+                icon.innerHTML = `<span class="icon-img">${app.icon}</span><span class="icon-label">${app.name}</span>`;
+                
+                icon.onclick = (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.icon').forEach(i => i.classList.remove('selected'));
+                    icon.classList.add('selected');
+                };
+                
+                icon.ondblclick = () => openApp(app.id);
+                makeDraggable(icon);
+                desk.appendChild(icon);
+            });
+        }
+
+        function openApp(id, data = null) {
+            const app = apps.find(a => a.id === id);
+            const winId = 'win-' + Math.random().toString(36).substr(2, 9);
+            const win = document.createElement('div');
+            win.className = 'window';
+            win.id = winId;
+            win.style.width = '700px'; win.style.height = '500px';
+            win.style.left = (100 + (zIndex - 100) * 20) + 'px';
+            win.style.top = (50 + (zIndex - 100) * 20) + 'px';
+            win.style.zIndex = ++zIndex;
+
+            win.innerHTML = `
+                <div class="title-bar">
+                    <div class="win-title">${app.icon} ${app.name}</div>
+                    <div class="win-controls">
+                        <button class="win-btn min" onclick="toggleMinimize('${winId}')"></button>
+                        <button class="win-btn max" onclick="toggleMaximize('${winId}')"></button>
+                        <button class="win-btn close" onclick="closeApp('${winId}')"></button>
+                    </div>
+                </div>
+                <div class="win-content" id="ctx-${winId}"></div>
+            `;
+
+            document.getElementById('desktop').appendChild(win);
+            makeDraggable(win, win.querySelector('.title-bar'));
+            win.onmousedown = () => win.style.zIndex = ++zIndex;
+
+            renderAppContent(id, document.getElementById(`ctx-${winId}`), data);
+        }
+
+        // --- RENDERIZADOR DE CONTEÚDO ---
+        function renderAppContent(id, container, data) {
+            switch(id) {
+                case 'terminal':
+                    container.style.background = '#1a1d23';
+                    container.innerHTML = `
+                        <div class="term-out" id="term-out">DevOS Shell v1.0.0<br>Digite 'help' para comandos.</div>
+                        <div class="term-input-line">
+                            <span>$</span>
+                            <input type="text" class="term-input" id="term-in" autofocus>
+                        </div>`;
+                    const input = container.querySelector('#term-in');
+                    input.onkeydown = (e) => { if(e.key === 'Enter') handleTerminal(input.value, container.querySelector('#term-out'), input); };
+                    break;
+
+                case 'paint':
+                    container.innerHTML = `
+                        <div class="paint-ui">
+                            <div class="paint-tools">
+                                <input type="color" id="p-col" value="#000000">
+                                <input type="range" id="p-str" min="1" max="50" value="5">
+                                <button onclick="clearCanvas(this)">Limpar</button>
+                                <button onclick="savePaint(this)">Salvar</button>
+                            </div>
+                            <canvas id="p-can" width="1000" height="800"></canvas>
+                        </div>`;
+                    initPaint(container.querySelector('#p-can'), container);
+                    break;
+
+                case 'browser':
+                    container.innerHTML = `
+                        <div class="browser-ui">
+                            <div class="nav-bar">
+                                <button onclick="this.parentElement.nextElementSibling.src='https://www.google.com/search?igu=1'">🏠</button>
+                                <input type="text" placeholder="Pesquisar ou digite URL" onkeydown="if(event.key=='Enter') this.parentElement.nextElementSibling.src=this.value.includes('://') ? this.value : 'https://www.bing.com/search?q='+this.value">
+                            </div>
+                            <iframe src="https://www.bing.com" style="flex:1; border:none;"></iframe>
+                        </div>`;
+                    break;
+
+                case 'explorer':
+                    updateExplorer(container);
+                    break;
+
+                case 'notes':
+                    container.innerHTML = `
+                        <div style="padding:15px; display:flex; flex-direction:column; height:100%; background:#fff; color:#333;">
+                            <input type="text" id="n-name" placeholder="nome.txt" value="${data ? data.name : ''}" style="border:none; border-bottom:1px solid #ddd; padding:10px; font-weight:bold;">
+                            <textarea id="n-text" style="flex:1; border:none; padding:10px; resize:none;">${data ? data.content : ''}</textarea>
+                            <button onclick="saveToFile(this)" style="padding:10px; background:var(--primary); border:none; color:white;">Salvar Arquivo</button>
+                        </div>`;
+                    break;
+
+                case 'camera':
+                    container.innerHTML = `<video id="cam-v" autoplay style="width:100%; height:100%; object-fit:cover; background:#000;"></video>`;
+                    navigator.mediaDevices.getUserMedia({video:true})
+                        .then(s => container.querySelector('#cam-v').srcObject = s)
+                        .catch(() => notify("Erro", "Câmera não acessível."));
+                    break;
+
+                case 'gallery':
+                    if(!data) {
+                        container.innerHTML = '<div class="explorer-grid" style="display:grid; grid-template-columns: repeat(4,1fr); padding:20px; gap:10px;"></div>';
+                        const grid = container.firstChild;
+                        fs.filter(f => f.type === 'image' || f.type === 'audio').forEach(f => {
+                            const div = document.createElement('div');
+                            div.innerHTML = `<div style="font-size:40px">${f.type=='image'?'🖼️':'🎵'}</div><small>${f.name}</small>`;
+                            div.style = "text-align:center; cursor:pointer; padding:10px; background:rgba(255,255,255,0.05)";
+                            div.onclick = () => openApp(f.type === 'image' ? 'gallery' : 'player', f);
+                            grid.appendChild(div);
+                        });
+                    } else {
+                        container.innerHTML = `<img src="${data.content}" style="width:100%; height:100%; object-fit:contain; background:#111;">`;
+                    }
+                    break;
+
+                case 'player':
+                    container.innerHTML = `
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; background:#222;">
+                            <div style="font-size:80px">🎵</div>
+                            <h3>${data ? data.name : 'Nenhum áudio'}</h3>
+                            <audio controls src="${data ? data.content : ''}" autoplay style="width:80%"></audio>
+                        </div>`;
+                    break;
+
+                case 'settings':
+                    container.innerHTML = `
+                        <div class="settings-grid">
+                            <div class="setting-card">
+                                <h4>Brilho</h4>
+                                <input type="range" min="10" max="100" value="${sysConfig.brightness}" oninput="updateBrightness(this.value)">
+                            </div>
+                            <div class="setting-card">
+                                <h4>Papel de Parede</h4>
+                                <input type="text" placeholder="URL da imagem" style="width:100%; padding:5px;" onchange="updateWallpaper(this.value)">
+                            </div>
+                            <div class="setting-card">
+                                <h4>Sistema</h4>
+                                <button onclick="localStorage.clear(); location.reload();">Resetar Fábrica</button>
+                            </div>
+                        </div>`;
+                    break;
+            }
+        }
+
+        // --- SISTEMA DE ARQUIVOS LOGIC ---
+        function updateExplorer(container) {
+            container.innerHTML = `
+                <div style="padding:15px;">
+                    <button onclick="openApp('notes')" style="margin-bottom:15px;">+ Novo Arquivo</button>
+                    <div id="file-list" style="display:grid; grid-template-columns: repeat(auto-fill, 100px); gap:20px;"></div>
+                </div>`;
+            const list = container.querySelector('#file-list');
+            fs.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.style = "text-align:center; cursor:pointer;";
+                let icon = '📄';
+                if(file.type === 'image') icon = '🖼️';
+                if(file.type === 'audio') icon = '🎵';
+                
+                item.innerHTML = `<div style="font-size:40px">${icon}</div><div style="font-size:11px">${file.name}</div>`;
+                item.ondblclick = () => openFile(file);
+                
+                // Botão direito para apagar
+                item.oncontextmenu = (e) => {
+                    e.preventDefault();
+                   if(confirm("Apagar "+file.name+"?")) {
+                        fs.splice(index, 1);
+                        saveFS();
+                        updateExplorer(container);
+                    }
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function openFile(file) {
+            if(file.type === 'text') openApp('notes', file);
+            else if(file.type === 'image') openApp('gallery', file);
+            else if(file.type === 'audio') openApp('player', file);
+        }
+
+        function saveToFile(btn) {
+            const name = btn.parentElement.querySelector('#n-name').value;
+            const content = btn.parentElement.querySelector('#n-text').value;
+            const existing = fs.find(f => f.name === name);
+            if(existing) existing.content = content;
+            else fs.push({name, content, type: 'text'});
+            saveFS();
+            notify("Salvo", "Arquivo guardado no sistema.");
+        }
+
+        function saveFS() { localStorage.setItem('devos_fs', JSON.stringify(fs)); }
+
+        // --- TERMINAL ENGINE ---
+        function handleTerminal(cmd, out, input) {
+            out.innerHTML += `<br>$ ${cmd}`;
+            const c = cmd.toLowerCase().trim();
+            if(c === 'help') out.innerHTML += "<br>Comandos: ls, clear, echo [txt], help, reboot, whoami";
+            else if(c === 'ls') out.innerHTML += "<br>" + fs.map(f => f.name).join("  ");
+            else if(c === 'clear') out.innerHTML = "DevOS Shell v1.0.0";
+            else if(c.startsWith('echo ')) out.innerHTML += "<br>" + cmd.substring(5);
+            else if(c === 'reboot') location.reload();
+            else if(c === 'whoami') out.innerHTML += "<br>usuário_admin@devos";
+            else out.innerHTML += `<br>Comando '${c}' não reconhecido.`;
+            input.value = '';
+            out.parentElement.scrollTop = out.parentElement.scrollHeight;
+        }
+
+        // --- PAINT ENGINE ---
+        function initPaint(can, container) {
+            const ctx = can.getContext('2d');
+            let drawing = false;
+            can.onmousedown = () => drawing = true;
+            can.onmouseup = () => { drawing = false; ctx.beginPath(); };
+            can.onmousemove = (e) => {
+                if(!drawing) return;
+                ctx.lineWidth = container.querySelector('#p-str').value;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = container.querySelector('#p-col').value;
+                const rect = can.getBoundingClientRect();
+                ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                ctx.stroke();
+            };
+        }
+
+        function clearCanvas(btn) {
+            const can = btn.closest('.paint-ui').querySelector('canvas');
+            can.getContext('2d').clearRect(0,0, can.width, can.height);
+        }
+
+        // --- UTILITÁRIOS ---
+        function makeDraggable(el, handle) {
+            let p1=0, p2=0, p3=0, p4=0;
+            const trigger = handle || el;
+            trigger.onmousedown = (e) => {
+                p3 = e.clientX; p4 = e.clientY;
+                document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
+                document.onmousemove = (e) => {
+                    p1 = p3 - e.clientX; p2 = p4 - e.clientY;
+                    p3 = e.clientX; p4 = e.clientY;
+                    el.style.top = (el.offsetTop - p2) + "px";
+                    el.style.left = (el.offsetLeft - p1) + "px";
+                };
+            };
+        }
+
+        function updateClock() {
+            document.getElementById('sys-clock').innerText = new Date().toLocaleTimeString('pt-BR');
+        }
+
+        function notify(title, msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 4000);
+        }
+
+        function updateBrightness(val) {
+            sysConfig.brightness = val;
+            document.body.style.setProperty('--brightness', val + '%');
+        }
+
+        function updateWallpaper(url) {
+            document.getElementById('desktop').style.backgroundImage = `url('${url}')`;
+        }
+
+        function closeApp(id) { document.getElementById(id).remove(); }
+        
+        function renderStartMenu() {
+            const list = document.getElementById('start-apps-list');
+            apps.forEach(app => {
+                const div = document.createElement('div');
+                div.style = "padding:12px; color:white; cursor:pointer; display:flex; align-items:center; gap:15px; border-radius:8px;";
+                div.innerHTML = `<span>${app.icon}</span> ${app.name}`;
+                div.onclick = () => { openApp(app.id); document.getElementById('start-menu').style.display='none'; };
+                div.onmouseover = () => div.style.background = 'rgba(255,255,255,0.1)';
+                div.onmouseout = () => div.style.background = 'transparent';
+                list.appendChild(div);
+            });
+        }
+
+        document.getElementById('start-btn').onclick = (e) => {
+            e.stopPropagation();
+            const m = document.getElementById('start-menu');
+            m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+        };
+
+        document.onclick = () => document.getElementById('start-menu').style.display = 'none';
+        document.getElementById('start-menu').onclick = (e) => e.stopPropagation();
+
+    </script>
+</body>
+</html>
