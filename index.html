@@ -382,7 +382,7 @@
         // 3. GERENCIADOR DE JANELAS
         // ==========================================
         function createWindow(title, icon, w, h, contentHTML) {
-            const id = 'win-' + Math.random().toString(36).substr(2, 9);
+            const id = 'win-' + Date.now() + Math.floor(Math.random()*1000);
             const win = document.createElement('div');
             win.className = 'window active';
             win.id = id;
@@ -395,16 +395,16 @@
             win.style.zIndex = ++zIndex;
 
             win.innerHTML = `
-                <div class="title-bar" onmousedown="startDrag(event, '${id}')">
-                    <div style="display:flex;align-items:center;gap:8px;font-size:12px; font-weight:600"><span>${icon}</span> ${title}</div>
-                    <div class="win-controls">
-                        <button class="win-btn min" title="Minimizar" onclick="minimize('${id}')"></button>
-                        <button class="win-btn max" title="Maximizar" onclick="maximize('${id}')"></button>
-                        <button class="win-btn close" title="Fechar" onclick="closeWindow('${id}')"></button>
-                    </div>
-                </div>
-                <div class="win-content" id="content-${id}">${contentHTML}</div>
-            `;
+        <div class="title-bar" onmousedown="startDrag(event, '${id}')">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px; font-weight:600"><span>${icon}</span> ${title}</div>
+            <div class="win-controls">
+                <button class="win-btn min" onclick="minimize('${id}')"></button>
+                <button class="win-btn max" onclick="maximize('${id}')"></button>
+                <button class="win-btn close" onclick="closeWindow('${id}')"></button>
+            </div>
+        </div>
+        <div class="win-content" id="content-${id}">${contentHTML}</div>
+    `;
 
             win.addEventListener('mousedown', () => focusWindow(id));
             document.body.appendChild(win);
@@ -422,9 +422,8 @@
 
             windows[id] = { el: win, maximized: false, minimized: false, rect: null };
             activeWin = id;
-            return { id: id, content: document.getElementById(`content-${id}`) };
-        }
-
+           return { id: id, content: document.getElementById(`content-${id}`) };
+        } 
         function closeWindow(id) {
             const w = windows[id].el;
             w.style.transform = "scale(0.9)";
@@ -828,10 +827,11 @@
                 </div>
             `);
 
-            const input = document.getElementById(`in-${id}`);
-            const ghost = document.getElementById(`ghost-${id}`);
-            const output = document.getElementById(`out-${id}`);
-
+            setTimeout(() => {
+        const winEl = document.getElementById(winObj.id);
+        const input = winEl.querySelector('#in-prompt');
+        if(input) input.focus();
+    }, 100);
             input.oninput = () => ghost.innerText = input.value;
             input.focus();
 
