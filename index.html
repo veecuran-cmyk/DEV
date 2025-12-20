@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            --bg-color: #282c34;
+            --taskbar-bg: rgba(20, 22, 26, 0.85);
+            --window-bg: rgba(33, 37, 43, 0.95);
+            --text-color: #abb2bf;
+            --primary-color: #61afef;
+            --accent-color: #98c379;
+            --danger-color: #e06c75;
+            --font-ui: 'Segoe UI', system-ui, sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --glass-blur: blur(15px);
+            --shadow-win: 0 15px 50px rgba(0,0,0,0.7);
+        }
+
+        /* --- RESET & BASE --- */
+        * { box-sizing: border-box; outline: none; user-select: none; }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #000;
+            font-family: var(--font-ui); color: var(--text-color);
+        }
+
+        /* SCROLLBARS */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #4b5263; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #5c6370; }
+
+        /* --- LOGIN SCREEN --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072') center/cover;
+            z-index: 100001; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        .login-box {
+            background: rgba(33, 37, 43, 0.8); padding: 40px; border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .user-option {
+            display: flex; align-items: center; gap: 15px; padding: 15px 30px; margin: 10px 0;
+            background: rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: 0.2s;
+            border: 1px solid transparent; width: 250px;
+        }
+        .user-option:hover { background: rgba(255,255,255,0.2); border-color: var(--primary-color); }
+        .user-img { width: 50px; height: 50px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #282c34; font-weight: bold; }
+        
+        /* --- BOOT SCREEN --- */
+        #boot-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 100000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: var(--font-code); color: var(--primary-color);
+        }
+        .loader-bar {
+            width: 300px; height: 4px; background: #333; margin-top: 20px;
+            border-radius: 2px; overflow: hidden;
+        }
+        .loader-progress {
+            width: 0%; height: 100%; background: var(--primary-color); transition: width 0.1s;
+        }
+
+        /* --- DESKTOP ENVIRONMENT --- */
+        #desktop {
+            position: absolute; top: 0; left: 0; width: 100%; height: calc(100vh - 45px);
+            background-size: cover; background-position: center; overflow: hidden;
+            transition: background-image 0.5s ease;
+        }
+
+        /* ICONS */
+        .desktop-icons-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start;
+            padding: 10px; gap: 10px;
+        }
+        .icon {
+            width: 90px; padding: 10px 5px;
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; border: 1px solid transparent; border-radius: 6px;
+            color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+            transition: background 0.2s; margin-bottom: 5px;
+        }
+        .icon:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .icon.selected {
+            background-color: rgba(97, 175, 239, 0.2);
+            border: 1px solid rgba(97, 175, 239, 0.5);
+        }
+        .icon-img { font-size: 36px; margin-bottom: 5px; pointer-events: none; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .icon-label { font-size: 12px; text-align: center; line-height: 1.2; pointer-events: none; word-break: break-word; }
+
+        /* --- WINDOW SYSTEM --- */
+        .window {
+            position: absolute;
+            background-color: var(--window-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            box-shadow: var(--shadow-win);
+            display: flex; flex-direction: column;
+            min-width: 300px; min-height: 200px;
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            overflow: hidden;
+            animation: openWindow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        @keyframes openWindow {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .window.active-window { border: 1px solid rgba(97, 175, 239, 0.4); }
+
+        .title-bar {
+            height: 36px; background-color: rgba(33, 37, 43, 0.95);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 12px; cursor: default; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .title-text { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; color: #dcdcdc; pointer-events: none;}
+        .window-controls { display: flex; gap: 8px; }
+        .win-btn {
+            width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer;
+        }
+        .btn-close { background: #ff5f56; } .btn-close:hover { background: #ff3b30; }
+        .btn-min { background: #ffbd2e; }
+        .btn-max { background: #27c93f; }
+
+        .window-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; background: rgba(33,37,43,0.6); }
+
+        /* --- TASKBAR --- */
+        #taskbar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 45px;
+            background-color: var(--taskbar-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            display: flex; align-items: center; padding: 0 10px;
+            z-index: 9000; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        #start-btn {
+            padding: 6px 14px; background: rgba(255,255,255,0.1); border-radius: 4px;
+            cursor: pointer; font-weight: bold; color: #fff; font-size: 14px;
+            display: flex; align-items: center; gap: 6px; transition: 0.2s;
+        }
+        #start-btn:hover, #start-btn.active { background: var(--primary-color); color: #282c34; }
+        
+        .task-list { flex: 1; display: flex; align-items: center; margin-left: 15px; gap: 5px; overflow-x: auto; }
+        .task-item {
+            padding: 0 15px; height: 32px; max-width: 150px;
+            background: rgba(255,255,255,0.05); border-radius: 4px;
+            display: flex; align-items: center; cursor: pointer; color: #ccc;
+            font-size: 12px; transition: 0.2s; white-space: nowrap; overflow: hidden;
+        }
+        .task-item:hover { background: rgba(255,255,255,0.1); }
+        .task-item.active { background: rgba(255,255,255,0.15); border-bottom: 2px solid var(--primary-color); color: #fff; }
+
+        .tray { margin-left: auto; display: flex; align-items: center; gap: 15px; font-size: 12px; color: #fff; padding-right: 10px; }
+
+        /* --- START MENU --- */
+        #start-menu {
+            position: fixed; bottom: 55px; left: 10px; width: 320px; height: 480px;
+            background: rgba(33, 37, 43, 0.98); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 9001;
+            display: none; flex-direction: column;
+            animation: slideUp 0.15s ease-out;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .start-header { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 40px; height: 40px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #282c34; }
+        .start-body { flex: 1; padding: 10px; overflow-y: auto; }
+        .start-item { padding: 10px; cursor: pointer; border-radius: 5px; display: flex; align-items: center; gap: 12px; color: #eee; transition: 0.2s; }
+        .start-item:hover { background: rgba(255,255,255,0.1); }
+        .start-footer { padding: 10px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: flex-end; }
+        .power-btn { background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); padding: 5px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .power-btn:hover { background: var(--danger-color); color: white; }
+
+        /* --- CONTEXT MENU --- */
+        #context-menu {
+            position: absolute; width: 180px; background: #2c313a; border: 1px solid #181a1f;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5); display: none; z-index: 10000; padding: 5px 0; border-radius: 4px;
+        }
+        .ctx-item { padding: 8px 15px; cursor: pointer; font-size: 13px; color: #eee; display: flex; justify-content: space-between; }
+        .ctx-item:hover { background: var(--primary-color); color: #282c34; }
+        .ctx-divider { height: 1px; background: #4b5263; margin: 4px 0; }
+
+        /* --- APP SPECIFIC STYLES --- */
+        /* Explorer */
+        .explorer-layout { display: flex; flex-direction: column; height: 100%; color: #fff; }
+        .explorer-toolbar { padding: 8px; background: rgba(0,0,0,0.2); display: flex; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .explorer-main { flex: 1; padding: 10px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; align-content: start; }
+        .file-item { display: flex; flex-direction: column; align-items: center; padding: 10px; cursor: pointer; border-radius: 4px; border: 1px solid transparent; position: relative; }
+        .file-item:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        .file-icon { font-size: 32px; margin-bottom: 5px; }
+        .file-name { font-size: 11px; text-align: center; word-break: break-all; }
+        
+        /* Editor */
+        .editor-area { width: 100%; height: 100%; background: #1e1e1e; color: #d4d4d4; border: none; resize: none; padding: 10px; font-family: var(--font-code); font-size: 14px; line-height: 1.5; }
+        .editor-toolbar { padding: 5px 10px; background: #252526; display: flex; gap: 10px; align-items: center; }
+        .editor-input { background: #3c3c3c; border: 1px solid #555; color: white; padding: 2px 5px; border-radius: 3px; font-family: var(--font-code); flex: 1; }
+        
+        /* Browser */
+        .browser-layout { display: flex; flex-direction: column; height: 100%; background: #fff; }
+        .browser-bar { padding: 8px; background: #f0f0f0; display: flex; gap: 5px; border-bottom: 1px solid #ccc; }
+        .browser-url { flex: 1; border-radius: 20px; border: 1px solid #ccc; padding: 5px 15px; outline: none; font-size: 13px; }
+        .browser-frame { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
+
+        /* Camera & Video */
+        .camera-container { width: 100%; height: 100%; background: #000; position: relative; display: flex; flex-direction: column; }
+        video { width: 100%; flex: 1; object-fit: contain; }
+        .camera-controls { padding: 15px; display: flex; justify-content: center; gap: 20px; background: rgba(0,0,0,0.8); }
+        .cam-btn { width: 50px; height: 50px; border-radius: 50%; border: 3px solid #fff; background: transparent; cursor: pointer; }
+        .cam-btn.record { background: #ff0000; border-color: #ff0000; }
+        .cam-btn.photo { background: #fff; }
+
+        /* Paint */
+        .paint-layout { display: flex; flex-direction: column; height: 100%; background: #ccc; }
+        .paint-tools { padding: 5px; background: #f0f0f0; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #999; flex-wrap: wrap; }
+        .paint-canvas { background: #fff; cursor: crosshair; display: block; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+
+        /* Terminal */
+        .terminal-bg { background: #0c0c0c; color: #cccccc; font-family: 'Consolas', monospace; padding: 10px; height: 100%; overflow-y: auto; font-size: 14px; }
+        .term-line { margin-bottom: 2px; }
+        .term-prompt { color: #98c379; margin-right: 5px; }
+
+        /* Gallery */
+        .gallery-layout { display: flex; flex-direction: column; height: 100%; padding: 10px; overflow-y: auto; }
+        .gallery-section { margin-bottom: 20px; }
+        .gallery-header { font-weight: bold; color: var(--primary-color); border-bottom: 1px solid #444; margin-bottom: 10px; padding-bottom: 5px; }
+
+        /* --- UTILS --- */
+        .btn-ui { padding: 5px 10px; background: var(--primary-color); border: none; border-radius: 4px; color: #282c34; cursor: pointer; font-weight: 600; font-size: 12px; }
+        .btn-ui:hover { opacity: 0.9; }
+        
+        /* Toast Notification */
+        #toast-container { position: fixed; bottom: 60px; right: 20px; z-index: 20000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: #21252b; border-left: 4px solid var(--primary-color); padding: 15px; border-radius: 4px; color: #fff; width: 300px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="login-screen">
+        <h1 style="color:white; font-family: 'JetBrains Mono'; margin-bottom: 30px;">Dev</h1>
+        <div class="login-box">
+            <h3 style="color:#aaa; margin-bottom: 20px;">Selecione o Usuário</h3>
+            <div class="user-option" onclick="login('admin')">
+                <div class="user-img">AD</div>
+                <div style="text-align: left; color: white;">
+                    <div>Administrador</div>
+                    <div style="font-size: 11px; color: #aaa;">Acesso Total</div>
+                </div>
+            </div>
+            <div class="user-option" onclick="login('guest')">
+                <div class="user-img" style="background: #98c379;">VS</div>
+                <div style="text-align: left; color: white;">
+                    <div>Visitante</div>
+                    <div style="font-size: 11px; color: #aaa;">Somente Leitura</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="boot-screen" style="display:none;">
+        <div style="font-size: 32px; font-weight: bold; letter-spacing: 2px;">DEV</div>
+        <div style="margin-top: 5px; font-size: 12px; color: #666;">Servidor Local Iniciado...</div>
+        <div class="loader-bar"><div class="loader-progress" id="boot-bar"></div></div>
+        <div id="boot-status" style="margin-top: 15px; font-size: 12px; color: #888;">Inicializando Kernel...</div>
+    </div>
+
+    <div id="desktop">
+        <div class="desktop-icons-container" id="icon-grid">
+        </div>
+    </div>
+
+    <div id="start-menu">
+        <div class="start-header">
+            <div class="user-avatar" id="start-avatar">AD</div>
+            <div>
+                <div style="font-weight: bold; color: #fff;" id="start-username">Admin User</div>
+                <div style="font-size: 11px; color: #aaa;">Dev</div>
+            </div>
+        </div>
+        <div class="start-body" id="start-list">
+        </div>
+        <div class="start-footer">
+            <button class="power-btn" onclick="location.reload()">⏻ Sair / Reiniciar</button>
+        </div>
+    </div>
+
+    <div id="taskbar">
+        <div id="start-btn" onclick="toggleStartMenu()">
+            <span>❖</span>
+        </div>
+        <div class="task-list" id="task-list">
+        </div>
+        <div class="tray">
+            <span id="network-status">📶</span>
+            <span id="sound-status">🔊</span>
+            <div style="text-align: right; line-height: 1.1;">
+                <div id="clock-time" style="font-weight: bold;">00:00</div>
+                <div id="clock-date" style="font-size: 10px; color: #aaa;">00/00/0000</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="context-menu">
+        <div class="ctx-item" onclick="createWindow('editor')">Novo Arquivo de Texto</div>
+        <div class="ctx-item" onclick="createWindow('explorer')">Abrir Explorador</div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" onclick="createWindow('trash')">Esvaziar Lixeira</div>
+        <div class="ctx-item" onclick="changeWallpaper()">Trocar Papel de Parede</div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // --- SYSTEM CONFIGURATION & STATE ---
+        const sysConfig = {
+            apps: [
+                { id: 'explorer', name: 'Arquivos', icon: '📁', type: 'explorer' },
+                { id: 'browser', name: 'Navegador', icon: '🌐', type: 'browser' },
+                { id: 'camera', name: 'Câmera Pro', icon: '📸', type: 'camera' },
+                { id: 'gallery', name: 'Galeria', icon: '🖼️', type: 'gallery' },
+                { id: 'recorder', name: 'Gravador', icon: '🎤', type: 'recorder' },
+                { id: 'paint', name: 'Paint', icon: '🎨', type: 'paint' },
+                { id: 'editor', name: 'Code Editor', icon: '📝', type: 'editor' },
+                { id: 'terminal', name: 'Terminal', icon: '💻', type: 'terminal' },
+                { id: 'trash', name: 'Lixeira', icon: '🗑️', type: 'trash' },
+                { id: 'settings', name: 'Ajustes', icon: '⚙️', type: 'settings' }
+            ],
+            wallpapers: [
+    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072',
+    'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=2070',
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070',
+    "https://wallpapers.com/images/high/aesthetic-computer-4k-zdh4qu5bvkokfi56.webp",
+    "https://wallpapers.com/images/high/aesthetic-computer-4k-tiykjap13144jghd.webp",
+    "https://wallpapers.com/images/high/aesthetic-computer-4k-2o1einarkegqjjj5.webp",
+    "https://wallpapers.com/images/high/aesthetic-computer-4k-lxt7iuha7vqd8tck.webp",
+    "https://wallpapers.com/images/high/aesthetic-computer-4k-bn4syklw2p8qu3n5.webp",
+    "https://wallpapers.com/images/high/rio-de-janeiro-praia-do-forte-d3di4c346dpslj8f.webp",
+    "https://wallpapers.com/images/high/magical-night-sky-with-stars-glowing-on-forest-odhlf3pbxuyevoam.webp",
+    // --- NOVOS ADICIONADOS ---
+    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2070", // Vale das Montanhas
+    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2071", // Floresta verdejante
+    "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=2070", // Montanha Escura
+    "https://images.unsplash.com/photo-1502657877623-f66bf489d236?q=80&w=2069", // Minimalista Noturno
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070", // Tecnologia Retro
+    "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1983", // Carro Esportivo Dark
+    "https://images.unsplash.com/photo-1511447333015-45b65e57f63b?q=80&w=2055", // Galáxia Abstrata (Roxo/Azul)
+    "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?q=80&w=2070", // Casa de Lago Suíça
+    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070", // Paisagem Costeira
+    "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2070"  // Montanhas Estreladas
+]
+        };
+
+        // GLOBAL STATE
+        let db;
+        let currentUser = null; 
+        let windows = {}; 
+        let zIndexCounter = 100;
+        let activeWindowId = null;
+        let wallpaperIndex = 0;
+        let mediaRecorder = null;
+        let mediaChunks = [];
+        let globalStream = null;
+
+        // --- DATABASE (IndexedDB) ---
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('DevOS_DB', 2);
+                
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('files')) {
+                        const store = db.createObjectStore('files', { keyPath: 'name' });
+                        store.createIndex('type', 'type', { unique: false });
+                        store.createIndex('deleted', 'deleted', { unique: false });
+                        
+                        store.add({ name: 'Bem-Vindo.txt', content: '=====================================================\n    BEM-VINDO AO DEVOS PLATINUM ULTIMATE EDITION\n=====================================================\n\nSaudações, usuário. \n\nVocê acaba de inicializar o ambiente DevOS, um sistema operacional simulado de alta performance.\n\n--- O QUE VOCÊ PODE FAZER AQUI? ---\n\n1. EXPLORADOR DE ARQUIVOS (📁): Gerencie seus documentos e mídias.\n2. CÂMERA PRO (📸): Capture fotos e vídeos reais.\n3. CODE EDITOR (📝): Escreva e execute códigos HTML em tempo real.\n4. TERMINAL (💻): Comandos de sistema para controle avançado.\n5. GRAVADOR (🎤): Grave áudios e salve-os na galeria.\n6. PAINT (🎨): Ferramenta completa de desenho.\n\n--- DICAS RÁPIDAS ---\n- Use o botão direito no desktop para trocar o papel de parede.\n- Seus arquivos ficam salvos no cache do navegador.\n\nExplore, crie e divirta-se!\n\nAtenciosamente,\ncuran.', type: 'txt', deleted: false });
+                        
+                    }
+                };
+
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = (e) => reject('Erro no DB');
+            });
+        }
+
+        function dbSaveFile(file) {
+            return new Promise((resolve, reject) => {
+                if(currentUser === 'guest') {
+                    showToast('Erro', 'Visitantes não podem salvar arquivos.');
+                    return reject('Permissão negada');
+                }
+                const tx = db.transaction(['files'], 'readwrite');
+                const store = tx.objectStore('files');
+                file.deleted = file.deleted || false;
+                store.put(file);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject();
+            });
+        }
+
+        function dbGetFiles(includeDeleted = false) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(['files'], 'readonly');
+                const store = tx.objectStore('files');
+                const request = store.getAll();
+                request.onsuccess = () => {
+                    const files = request.result;
+                    resolve(files.filter(f => includeDeleted ? f.deleted === true : f.deleted === false));
+                };
+            });
+        }
+
+        function dbDeleteFile(name, permanent = false) {
+            return new Promise((resolve, reject) => {
+                if(currentUser === 'guest') return reject();
+                const tx = db.transaction(['files'], 'readwrite');
+                const store = tx.objectStore('files');
+                if(permanent) store.delete(name);
+                else {
+                    store.get(name).onsuccess = (e) => {
+                        const file = e.target.result;
+                        if(file) { file.deleted = true; store.put(file); }
+                    };
+                }
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        function dbRestoreFile(name) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(['files'], 'readwrite');
+                const store = tx.objectStore('files');
+                store.get(name).onsuccess = (e) => {
+                    const file = e.target.result;
+                    if(file) { file.deleted = false; store.put(file); }
+                };
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        function dbEmptyTrash() {
+             return new Promise((resolve) => {
+                if(currentUser === 'guest') return resolve();
+                const tx = db.transaction(['files'], 'readwrite');
+                const store = tx.objectStore('files');
+                const request = store.getAll();
+                request.onsuccess = () => {
+                    const files = request.result;
+                    files.forEach(f => { if(f.deleted) store.delete(f.name); });
+                };
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        // --- LOGIN & BOOT ---
+        function login(userType) {
+            currentUser = userType;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('boot-screen').style.display = 'flex';
+            
+            const avatar = userType === 'admin' ? 'AD' : 'VS';
+            const name = userType === 'admin' ? 'Admin User' : 'Visitante';
+            document.getElementById('start-avatar').innerText = avatar;
+            document.getElementById('start-avatar').style.background = userType === 'admin' ? '#61afef' : '#98c379';
+            document.getElementById('start-username').innerText = name;
+
+            initDB().then(() => { runBootSequence(); });
+        }
+
+        function runBootSequence() {
+            let width = 0;
+            const bar = document.getElementById('boot-bar');
+            const status = document.getElementById('boot-status');
+            const interval = setInterval(() => {
+                width += Math.random() * 8;
+                if(width > 100) width = 100;
+                bar.style.width = width + '%';
+                if(width > 30) status.innerText = "Carregando Filesystem...";
+                if(width > 90) status.innerText = "Iniciando Interface Gráfica...";
+                if(width === 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('boot-screen').style.display = 'none';
+                        initDesktop();
+                    }, 500);
+                }
+            }, 80);
+        }
+
+        function initDesktop() {
+            setupClock();
+            renderIcons();
+            renderStartMenu();
+            document.getElementById('desktop').style.backgroundImage = `url('${sysConfig.wallpapers[0]}')`;
+
+            document.addEventListener('click', (e) => {
+                const startMenu = document.getElementById('start-menu');
+                const startBtn = document.getElementById('start-btn');
+                const ctxMenu = document.getElementById('context-menu');
+                
+                if(!startMenu.contains(e.target) && !startBtn.contains(e.target)) {
+                    startMenu.style.display = 'none';
+                    startBtn.classList.remove('active');
+                }
+                ctxMenu.style.display = 'none';
+                if(e.target.id === 'desktop') document.querySelectorAll('.icon').forEach(i => i.classList.remove('selected'));
+            });
+
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                const ctx = document.getElementById('context-menu');
+                ctx.style.display = 'block';
+                ctx.style.left = e.clientX + 'px';
+                ctx.style.top = e.clientY + 'px';
+            });
+
+            showToast('Sistema Pronto', `Logado como ${currentUser === 'admin' ? 'Administrador' : 'Visitante'}`);
+        }
+
+        // --- RENDERERS ---
+        function renderIcons() {
+            const container = document.getElementById('icon-grid');
+            container.innerHTML = '';
+            sysConfig.apps.forEach((app) => {
+                const el = document.createElement('div');
+                el.className = 'icon';
+                el.innerHTML = `<div class="icon-img">${app.icon}</div><div class="icon-label">${app.name}</div>`;
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll('.icon').forEach(x => x.classList.remove('selected'));
+                    el.classList.add('selected');
+                };
+                el.ondblclick = () => createWindow(app.id);
+                el.onmousedown = (e) => initDrag(e, el, true);
+                container.appendChild(el);
+            });
+        }
+
+        function renderStartMenu() {
+            const list = document.getElementById('start-list');
+            list.innerHTML = '';
+            sysConfig.apps.forEach(app => {
+                const item = document.createElement('div');
+                item.className = 'start-item';
+                item.innerHTML = `<span>${app.icon}</span> ${app.name}`;
+                item.onclick = () => {
+                    createWindow(app.id);
+                    document.getElementById('start-menu').style.display = 'none';
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function setupClock() {
+            const update = () => {
+                const now = new Date();
+                document.getElementById('clock-time').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                document.getElementById('clock-date').innerText = now.toLocaleDateString();
+            };
+            setInterval(update, 1000);
+            update();
+        }
+
+        function toggleStartMenu() {
+            const menu = document.getElementById('start-menu');
+            const btn = document.getElementById('start-btn');
+            const isOpen = menu.style.display === 'flex';
+            menu.style.display = isOpen ? 'none' : 'flex';
+            if(!isOpen) btn.classList.add('active'); else btn.classList.remove('active');
+        }
+
+        // --- WINDOW MANAGEMENT ---
+        function createWindow(appId, fileData = null) {
+            const app = sysConfig.apps.find(a => a.id === appId) || {name: 'Visualizador', icon: '📄', type: 'viewer'};
+            const id = 'win_' + Date.now();
+            const x = 100 + (Math.random() * 50);
+            const y = 50 + (Math.random() * 50);
+
+            const win = document.createElement('div');
+            win.className = 'window active-window';
+            win.id = id;
+            win.style.left = x + 'px';
+            win.style.top = y + 'px';
+            win.style.width = '800px';
+            win.style.height = '550px';
+            win.style.zIndex = ++zIndexCounter;
+
+            win.innerHTML = `
+                <div class="title-bar" onmousedown="initDrag(event, document.getElementById('${id}'))">
+                    <div class="title-text">${app.icon} ${fileData ? fileData.name : app.name}</div>
+                    <div class="window-controls">
+                        <button class="win-btn btn-min" onclick="minimizeWindow('${id}')"></button>
+                        <button class="win-btn btn-max" onclick="maximizeWindow('${id}')"></button>
+                        <button class="win-btn btn-close" onclick="closeWindow('${id}')"></button>
+                    </div>
+                </div>
+                <div class="window-content">${getAppContent(app.type, id, fileData)}</div>
+            `;
+            
+            win.addEventListener('mousedown', () => activateWindow(id));
+            document.getElementById('desktop').appendChild(win);
+            
+            windows[id] = { element: win, minimized: false, maximized: false, prevRect: null, eraser: false, paintRecorder: null, paintChunks: [] };
+            addTaskbarItem(id, app.name, app.icon);
+            activateWindow(id);
+
+            initAppLogic(app.type, id, fileData);
+        }
+
+        function closeWindow(id) {
+            const win = document.getElementById(id);
+            if(win) {
+                const vid = win.querySelector('video');
+                if(vid && vid.srcObject) vid.srcObject.getTracks().forEach(track => track.stop());
+                win.remove();
+            }
+            delete windows[id];
+            const task = document.getElementById('task_' + id);
+            if(task) task.remove();
+        }
+
+        function minimizeWindow(id) {
+            const win = document.getElementById(id);
+            win.style.display = 'none';
+            windows[id].minimized = true;
+            document.getElementById('task_'+id).classList.remove('active');
+        }
+
+        function maximizeWindow(id) {
+            const win = document.getElementById(id);
+            const state = windows[id];
+            if(state.maximized) {
+                win.style.width = state.prevRect.width;
+                win.style.height = state.prevRect.height;
+                win.style.top = state.prevRect.top;
+                win.style.left = state.prevRect.left;
+                state.maximized = false;
+            } else {
+                state.prevRect = { width: win.style.width, height: win.style.height, top: win.style.top, left: win.style.left };
+                win.style.top = '0'; win.style.left = '0'; win.style.width = '100%'; win.style.height = 'calc(100vh - 45px)';
+                state.maximized = true;
+            }
+        }
+
+        function activateWindow(id) {
+            if(activeWindowId && document.getElementById(activeWindowId)) {
+                document.getElementById(activeWindowId).classList.remove('active-window');
+                const task = document.getElementById('task_'+activeWindowId);
+                if(task) task.classList.remove('active');
+            }
+            const win = document.getElementById(id);
+            if(windows[id].minimized) { win.style.display = 'flex'; windows[id].minimized = false; }
+            win.style.zIndex = ++zIndexCounter;
+            win.classList.add('active-window');
+            const t = document.getElementById('task_'+id);
+            if(t) t.classList.add('active');
+            activeWindowId = id;
+        }
+
+        function addTaskbarItem(id, name, icon) {
+            const item = document.createElement('div');
+            item.className = 'task-item active';
+            item.id = 'task_' + id;
+            item.innerHTML = `${icon} ${name}`;
+            item.onclick = () => {
+                if(activeWindowId === id && !windows[id].minimized) minimizeWindow(id);
+                else activateWindow(id);
+            };
+            document.getElementById('task-list').appendChild(item);
+        }
+
+        // --- APP CONTENT ---
+        function getAppContent(type, id, fileData) {
+            switch(type) {
+                case 'explorer':
+                    return `
+                        <div class="explorer-layout">
+                            <div class="explorer-toolbar">
+                                <button class="btn-ui" onclick="createWindow('editor')">+ Novo Arquivo</button>
+                                <button class="btn-ui" onclick="refreshExplorer('${id}')">↻ Recarregar</button>
+                            </div>
+                            <div class="explorer-main" id="exp_main_${id}">Carregando...</div>
+                        </div>`;
+                case 'trash':
+                    return `
+                        <div class="explorer-layout">
+                            <div class="explorer-toolbar" style="background:#3e2020;">
+                                <button class="btn-ui" style="background:var(--danger-color); color:white;" onclick="emptyTrash('${id}')">🗑️ Esvaziar</button>
+                                <button class="btn-ui" onclick="refreshTrash('${id}')">↻ Recarregar</button>
+                            </div>
+                            <div class="explorer-main" id="trash_main_${id}">Carregando lixeira...</div>
+                        </div>`;
+                case 'editor':
+                    const content = fileData ? fileData.content : '';
+                    const name = fileData ? fileData.name : 'novo_arquivo.txt';
+                    return `
+                        <div style="display:flex; flex-direction:column; height:100%;">
+                            <div class="editor-toolbar">
+                                <input id="ed_name_${id}" class="editor-input" value="${name}">
+                                <button class="btn-ui" onclick="saveFile('${id}')">Salvar</button>
+                                <button class="btn-ui" onclick="runCode('${id}')">Executar HTML</button>
+                            </div>
+                            <textarea id="ed_area_${id}" class="editor-area" spellcheck="false">${content}</textarea>
+                        </div>`;
+                case 'browser':
+                    return `
+                        <div class="browser-layout">
+                            <div class="browser-bar">
+                                <input class="browser-url" id="url_${id}" placeholder="Pesquise ou digite URL..." onkeydown="if(event.key=='Enter') loadURL('${id}')">
+                                <button class="btn-ui" onclick="loadURL('${id}')">Ir</button>
+                            </div>
+                            <iframe id="frame_${id}" class="browser-frame" src="https://www.bing.com" sandbox="allow-forms allow-scripts allow-same-origin allow-presentation"></iframe>
+                        </div>`;
+                case 'camera':
+                    return `
+                        <div class="camera-container">
+                            <video id="vid_${id}" autoplay></video>
+                            <div class="camera-controls">
+                                <button class="cam-btn photo" onclick="takePhoto('${id}')" title="Tirar Foto"></button>
+                                <button class="cam-btn record" id="rec_btn_${id}" onclick="toggleRecord('${id}')" title="Gravar Vídeo"></button>
+                            </div>
+                        </div>`;
+                case 'paint':
+                    return `
+                        <div class="paint-layout">
+                            <div class="paint-tools">
+                                <label style="font-size:11px;">Cor:</label>
+                                <input type="color" id="p_color_${id}" value="#000000">
+                                <label style="font-size:11px;">Espessura:</label>
+                                <input type="range" id="p_size_${id}" min="1" max="50" value="5" title="Tamanho">
+                                <button class="btn-ui" onclick="toggleEraser('${id}')" id="btn_eraser_${id}" title="Alternar Borracha/Lápis">✏️</button>
+                                <div style="width:1px; height:20px; background:#999; margin:0 5px;"></div>
+                                <button class="btn-ui" id="btn_rec_paint_${id}" onclick="togglePaintRecording('${id}')" title="Gravar Processo">🎥 Gravar</button>
+                                <button class="btn-ui" onclick="savePaintImage('${id}')" title="Salvar Imagem">💾 Foto</button>
+                                <button class="btn-ui" onclick="clearPaint('${id}')" title="Limpar Tela">🗑️</button>
+                            </div>
+                            <div style="position:relative; flex:1; overflow:hidden; background:#ccc; display:flex; justify-content:center; align-items:center;">
+                                <canvas id="canvas_${id}" width="800" height="600" class="paint-canvas"></canvas>
+                            </div>
+                        </div>`;
+                case 'gallery':
+                    return `
+                        <div class="gallery-layout">
+                            <div class="gallery-section">
+                                <div class="gallery-header">Galeria Multimídia</div>
+                                <div class="explorer-main" id="gal_content_${id}" style="height:auto; min-height:100px;">Carregando...</div>
+                            </div>
+                        </div>`;
+                case 'viewer':
+                    if(!fileData) return '<div style="padding:20px">Erro.</div>';
+                    if(fileData.type === 'jpg' || fileData.type === 'png') 
+                         return `<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#000;"><img src="${fileData.content}" style="max-width:100%;max-height:100%;"></div>`;
+                    if(fileData.type === 'webm') 
+                        return `<video src="${fileData.content}" controls style="width:100%;height:100%;background:#000;"></video>`;
+                    if(fileData.type === 'wav') 
+                        return `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;"><div style="font-size:50px;">🎵</div><h3>${fileData.name}</h3><audio src="${fileData.content}" controls></audio></div>`;
+                    return `<iframe srcdoc="${fileData.content.replace(/"/g, '&quot;')}" style="width:100%;height:100%;border:none;background:#fff;"></iframe>`;
+                case 'recorder':
+                    return `
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px;">
+                  <div style="font-size:60px;">🎙️</div>
+                            <div id="rec_status_${id}">Pronto para gravar</div>
+                            <button id="audio_rec_btn_${id}" class="btn-ui" style="padding:10px 20px; font-size:16px;" onclick="toggleAudioRecord('${id}')">Iniciar Gravação</button>
+                        </div>`;
+                case 'terminal':
+                    return `
+                        <div class="terminal-bg" id="term_out_${id}">
+                            <div>DevOS Terminal [Kernel 3.0]</div><br>
+                            <div class="term-line" style="display:flex;"><span class="term-prompt">root@devos:~$</span><input class="term-in" id="term_in_${id}" style="background:transparent;border:none;color:white;flex:1;font-family:inherit;" onkeydown="handleTerminal(event, '${id}')"></div>
+                        </div>`;
+                case 'settings':
+                    return `
+                        <div style="padding:20px; color:#fff;">
+                            <h3>Configurações</h3>
+                            <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:5px; margin-bottom:10px;">
+                                <label>Brilho</label>
+                                <input type="range" min="30" max="100" value="100" style="width:100%" oninput="document.body.style.filter = 'brightness('+this.value+'%)'">
+                            </div>
+                             <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:5px;">
+                                <button class="btn-ui" style="background:#e06c75; color:white; width:100%;" onclick="resetFactory()">Resetar Sistema</button>
+                            </div>
+                        </div>`;
+                default: return '<div>App não suportado.</div>';
+            }
+        }
+
+        // --- APP LOGIC ---
+        function initAppLogic(type, id, fileData) {
+            if(type === 'explorer') refreshExplorer(id);
+            if(type === 'trash') refreshTrash(id);
+            if(type === 'gallery') refreshGallery(id);
+            if(type === 'paint') initPaintCanvas(id);
+            if(type === 'camera') initCamera(id);
+            if(type === 'terminal') document.getElementById(`term_in_${id}`).focus();
+        }
+
+        // --- FILE SYSTEM ---
+        async function refreshExplorer(id) {
+            const container = document.getElementById(`exp_main_${id}`);
+            if(!container) return;
+            container.innerHTML = '';
+            const files = await dbGetFiles(false);
+            if(files.length === 0) { container.innerHTML = '<div style="width:100%; text-align:center; margin-top:20px; color:#666;">Vazio</div>'; return; }
+
+            files.forEach(file => {
+                const el = document.createElement('div');
+                el.className = 'file-item';
+                let icon = '📄';
+                if(file.type === 'html') icon = '🌐';
+                if(file.type === 'jpg' || file.type === 'png') icon = '🖼️';
+                if(file.type === 'webm') icon = '🎬';
+                if(file.type === 'wav') icon = '🎵';
+                if(file.type === 'exe') icon = '🚀';
+
+                el.innerHTML = `<div class="file-icon">${icon}</div><div class="file-name">${file.name}</div>`;
+                el.ondblclick = () => openFile(file);
+                el.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    if(confirm(`Mover ${file.name} para a Lixeira?`)) {
+                        dbDeleteFile(file.name).then(() => refreshExplorer(id));
+                    }
+                };
+                container.appendChild(el);
+            });
+        }
+
+        async function refreshTrash(id) {
+            const container = document.getElementById(`trash_main_${id}`);
+            if(!container) return;
+            container.innerHTML = '';
+            const files = await dbGetFiles(true);
+            if(files.length === 0) { container.innerHTML = '<div style="width:100%; text-align:center; margin-top:20px; color:#666;">Lixeira Vazia</div>'; return; }
+
+            files.forEach(file => {
+                const el = document.createElement('div');
+                el.className = 'file-item';
+                el.style.opacity = '0.7';
+                el.innerHTML = `<div class="file-icon">🗑️</div><div class="file-name">${file.name}</div>`;
+                el.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    if(confirm(`Restaurar ${file.name}?`)) dbRestoreFile(file.name).then(() => refreshTrash(id));
+                };
+                container.appendChild(el);
+            });
+        }
+
+        async function emptyTrash(id) {
+            if(confirm('Isso apagará permanentemente os arquivos.')) {
+                await dbEmptyTrash();
+                refreshTrash(id);
+            }
+        }
+
+        function openFile(file) {
+            if(file.type === 'exe') {
+                try { const safeEval = new Function(file.content); safeEval(); } 
+                catch(e) { showToast('Erro EXE', e.message); }
+                return;
+            }
+            if(['txt', 'html'].includes(file.type)) createWindow('editor', file);
+            else createWindow('viewer', file);
+        }
+
+        function saveFile(id) {
+            const name = document.getElementById(`ed_name_${id}`).value;
+            const content = document.getElementById(`ed_area_${id}`).value;
+            const type = name.split('.').pop();
+            dbSaveFile({ name, content, type }).then(() => {
+                showToast('Salvo', 'Arquivo gravado.');
+                Object.keys(windows).forEach(winId => refreshExplorer(winId));
+            });
+        }
+
+        function runCode(id) {
+            const content = document.getElementById(`ed_area_${id}`).value;
+            createWindow('viewer', { name: 'Preview', content: content, type: 'html' });
+        }
+
+        // --- BROWSER ---
+        function loadURL(id) {
+            const urlInput = document.getElementById(`url_${id}`).value;
+            const frame = document.getElementById(`frame_${id}`);
+            let url = urlInput.trim();
+            const isUrl = /^(http|https):\/\/[^ "]+$/.test(url) || /^www\.[^ "]+$/.test(url) || (url.includes('.') && !url.includes(' '));
+            if(isUrl) { if(!url.startsWith('http')) url = 'https://' + url; } 
+            else { url = 'https://www.bing.com/search?q=' + encodeURIComponent(url); }
+            frame.src = url;
+        }
+
+        // --- PAINT FEATURES (NEW) ---
+        function initPaintCanvas(id) {
+            const canvas = document.getElementById(`canvas_${id}`);
+            const ctx = canvas.getContext('2d');
+            
+            // Set white background explicit
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let painting = false;
+            
+            const start = () => painting = true;
+            const end = () => { painting = false; ctx.beginPath(); };
+            const draw = (e) => {
+                if(!painting) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                ctx.lineWidth = document.getElementById(`p_size_${id}`).value;
+                ctx.lineCap = 'round';
+
+                if (windows[id].eraser) {
+                    ctx.strokeStyle = "#ffffff";
+                } else {
+                    ctx.strokeStyle = document.getElementById(`p_color_${id}`).value;
+                }
+
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            };
+
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mouseup', end);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseleave', end);
+        }
+
+        function toggleEraser(id) {
+            windows[id].eraser = !windows[id].eraser;
+            const btn = document.getElementById(`btn_eraser_${id}`);
+            btn.innerHTML = windows[id].eraser ? '🧽' : '✏️';
+            btn.style.background = windows[id].eraser ? '#e06c75' : '';
+        }
+
+        function clearPaint(id) {
+            const canvas = document.getElementById(`canvas_${id}`);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function savePaintImage(id) {
+            const canvas = document.getElementById(`canvas_${id}`);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            const fileName = `Arte_${Date.now()}.jpg`;
+            dbSaveFile({ name: fileName, content: dataUrl, type: 'jpg' }).then(() => {
+                showToast('Imagem Salva', fileName + ' na Galeria.');
+            });
+        }
+
+        function togglePaintRecording(id) {
+            const canvas = document.getElementById(`canvas_${id}`);
+            const btn = document.getElementById(`btn_rec_paint_${id}`);
+            
+            if (windows[id].paintRecorder && windows[id].paintRecorder.state === 'recording') {
+                // STOP RECORDING
+                windows[id].paintRecorder.stop();
+                btn.innerHTML = "🎥 Gravar";
+                btn.style.background = "";
+            } else {
+                // START RECORDING
+                const stream = canvas.captureStream(30); // 30 FPS
+                windows[id].paintChunks = [];
+                windows[id].paintRecorder = new MediaRecorder(stream);
+                
+                windows[id].paintRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) windows[id].paintChunks.push(e.data);
+                };
+                
+                windows[id].paintRecorder.onstop = () => {
+                    const blob = new Blob(windows[id].paintChunks, { type: 'video/webm' });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    reader.onloadend = () => {
+                        const fileName = `Speedpaint_${Date.now()}.webm`;
+                        dbSaveFile({ name: fileName, content: reader.result, type: 'webm' }).then(() => {
+                            showToast('Vídeo Salvo', fileName + ' salvo.');
+                        });
+                    };
+                };
+
+                windows[id].paintRecorder.start();
+                btn.innerHTML = "⏹ Parar";
+                btn.style.background = "red";
+                showToast('Gravando', 'Desenhando...');
+            }
+        }
+
+        // --- CAMERA & MEDIA ---
+        function initCamera(id) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(stream => {
+                    const vid = document.getElementById(`vid_${id}`);
+                    if(vid) vid.srcObject = stream;
+                    globalStream = stream; 
+                })
+                .catch(err => {
+                    const vid = document.getElementById(`vid_${id}`);
+                    if(vid) vid.parentElement.innerHTML = '<div style="color:white;text-align:center;padding-top:50px;">Erro: Câmera não detectada.</div>';
+                });
+        }
+
+        function takePhoto(id) {
+            const vid = document.getElementById(`vid_${id}`);
+            if(!vid.srcObject) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = vid.videoWidth;
+            canvas.height = vid.videoHeight;
+            canvas.getContext('2d').drawImage(vid, 0, 0);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            const fileName = `Foto_${Date.now()}.jpg`;
+            dbSaveFile({ name: fileName, content: dataUrl, type: 'jpg' }).then(() => showToast('Foto', 'Salva na Galeria.'));
+        }
+
+        function toggleRecord(id) {
+            const btn = document.getElementById(`rec_btn_${id}`);
+            if(mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                btn.style.backgroundColor = 'transparent'; btn.style.borderColor = '#fff';
+            } else {
+                if(!globalStream) return;
+                mediaChunks = [];
+                mediaRecorder = new MediaRecorder(globalStream);
+                mediaRecorder.ondataavailable = e => mediaChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(mediaChunks, { type: 'video/webm' });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    reader.onloadend = () => {
+                        const fileName = `Video_${Date.now()}.webm`;
+                        dbSaveFile({ name: fileName, content: reader.result, type: 'webm' }).then(() => showToast('Vídeo', 'Salvo.'));
+                    };
+                };
+                mediaRecorder.start();
+                btn.style.backgroundColor = 'red'; btn.style.borderColor = 'red';
+            }
+        }
+
+        // --- GALLERY ---
+        async function refreshGallery(id) {
+            const container = document.getElementById(`gal_content_${id}`);
+            if(!container) return;
+            container.innerHTML = '';
+            const files = await dbGetFiles(false);
+            const mediaFiles = files.filter(f => ['jpg','png','webm'].includes(f.type));
+            if(mediaFiles.length===0) {container.innerHTML = 'Vazio'; return;}
+
+            mediaFiles.forEach(file => {
+                const el = document.createElement('div');
+                el.className = 'file-item';
+                let icon = file.type === 'webm' ? '🎬' : '🖼️';
+                el.innerHTML = `<div class="file-icon">${icon}</div><div class="file-name">${file.name}</div>`;
+                el.ondblclick = () => openFile(file);
+                container.appendChild(el);
+            });
+        }
+
+        // --- UTILS ---
+        function handleTerminal(e, id) {
+            if(e.key === 'Enter') {
+                const input = e.target;
+                const cmd = input.value.trim();
+                const out = document.getElementById(`term_out_${id}`);
+                const history = document.createElement('div');
+                history.innerHTML = `<span class="term-prompt">root@devos:~$</span> ${cmd}`;
+                out.insertBefore(history, input.parentElement);
+                
+                let response = '';
+                const parts = cmd.split(' ');
+                
+                switch(parts[0].toLowerCase()) {
+                    case 'help': response = 'Comandos: help, ls, clear, rm [arq], reboot, exit'; break;
+                    case 'ls': dbGetFiles().then(files => appendTermResponse(id, files.map(f => f.name).join('<br>'), input)); input.value = ''; return;
+                    case 'rm': if(parts[1]) { dbDeleteFile(parts[1]).then(()=>appendTermResponse(id,'Deletado',input)); } else response='Uso: rm [nome]'; break;
+                    case 'clear': out.innerHTML = `<div>DevOS Terminal</div><br><div class="term-line" style="display:flex;"><span class="term-prompt">root@devos:~$</span><input class="term-in" id="term_in_${id}" style="background:transparent;border:none;color:white;flex:1;" onkeydown="handleTerminal(event, '${id}')"></div>`; setTimeout(() => document.getElementById(`term_in_${id}`).focus(), 10); return;
+                    case 'reboot': location.reload(); break;
+                    case 'exit': closeWindow(id); return;
+                    default: response = `Erro: ${parts[0]}`;
+                }
+                if(response) appendTermResponse(id, response, input);
+                input.value = '';
+                out.scrollTop = out.scrollHeight;
+            }
+        }
+
+        function appendTermResponse(id, text, input) {
+            const out = document.getElementById(`term_out_${id}`);
+            const respEl = document.createElement('div');
+            respEl.innerHTML = text;
+            respEl.style.marginBottom = '10px';
+            respEl.style.color = '#ccc';
+            out.insertBefore(respEl, input.parentElement);
+        }
+
+        function initDrag(e, el, isIcon = false) {
+            if(el.classList.contains('window') && windows[el.id] && windows[el.id].maximized) return;
+            let startX = e.clientX;
+            let startY = e.clientY;
+            let startLeft = el.offsetLeft;
+            let startTop = el.offsetTop;
+            const move = (ev) => {
+                const dx = ev.clientX - startX;
+                const dy = ev.clientY - startY;
+                el.style.left = (startLeft + dx) + 'px';
+                el.style.top = (startTop + dy) + 'px';
+            };
+            const stop = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); };
+            document.addEventListener('mousemove', move);
+            document.addEventListener('mouseup', stop);
+        }
+
+        function showToast(title, msg) {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            el.className = 'toast';
+            el.innerHTML = `<div style="font-weight:bold; margin-bottom:5px;">${title}</div><div style="font-size:12px; color:#ccc;">${msg}</div>`;
+            container.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 4000);
+        }
+
+        function changeWallpaper() {
+            wallpaperIndex = (wallpaperIndex + 1) % sysConfig.wallpapers.length;
+            document.getElementById('desktop').style.backgroundImage = `url('${sysConfig.wallpapers[wallpaperIndex]}')`;
+        }
+        
+        function resetFactory() {
+            if(confirm('Isso apagará TUDO. Continuar?')) { indexedDB.deleteDatabase('DevOS_DB'); location.reload(); }
+        }
+    </script>
+</body>
+</html>
