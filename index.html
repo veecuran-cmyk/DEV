@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dev</title>
+    <title>DevOS Platinum Ultimate Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* --- CORE VARIABLES --- */
@@ -73,7 +73,7 @@
         #desktop {
             position: absolute; top: 0; left: 0; width: 100%; height: calc(100vh - 45px);
             background-size: cover; background-position: center; overflow: hidden;
-            transition: background-image 0.5s ease;
+            transition: background-image 0.5s ease; filter: brightness(100%);
         }
 
         /* ICONS */
@@ -105,7 +105,7 @@
             border-radius: 8px;
             box-shadow: var(--shadow-win);
             display: flex; flex-direction: column;
-            min-width: 300px; min-height: 200px;
+            min-width: 350px; min-height: 250px;
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
             overflow: hidden;
@@ -120,7 +120,7 @@
         .title-bar {
             height: 36px; background-color: rgba(33, 37, 43, 0.95);
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 12px; cursor: default; border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 0 12px; cursor: move; border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .title-text { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; color: #dcdcdc; pointer-events: none;}
         .window-controls { display: flex; gap: 8px; }
@@ -128,10 +128,21 @@
             width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer;
         }
         .btn-close { background: #ff5f56; } .btn-close:hover { background: #ff3b30; }
-        .btn-min { background: #ffbd2e; }
-        .btn-max { background: #27c93f; }
+        .btn-min { background: #ffbd2e; } .btn-min:hover { background: #e0a324; }
+        .btn-max { background: #27c93f; } .btn-max:hover { background: #1fa432; }
 
         .window-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; background: rgba(33,37,43,0.6); }
+
+        .resizer {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 15px;
+            height: 15px;
+            cursor: se-resize;
+            background: transparent;
+            z-index: 10;
+        }
 
         /* --- TASKBAR --- */
         #taskbar {
@@ -177,15 +188,15 @@
         .start-item { padding: 10px; cursor: pointer; border-radius: 5px; display: flex; align-items: center; gap: 12px; color: #eee; transition: 0.2s; }
         .start-item:hover { background: rgba(255,255,255,0.1); }
         .start-footer { padding: 10px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: flex-end; }
-        .power-btn { background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); padding: 5px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .power-btn { background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); padding: 5px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: 0.2s; }
         .power-btn:hover { background: var(--danger-color); color: white; }
 
         /* --- CONTEXT MENU --- */
         #context-menu {
-            position: absolute; width: 180px; background: #2c313a; border: 1px solid #181a1f;
+            position: absolute; width: 220px; background: #2c313a; border: 1px solid #181a1f;
             box-shadow: 5px 5px 15px rgba(0,0,0,0.5); display: none; z-index: 10000; padding: 5px 0; border-radius: 4px;
         }
-        .ctx-item { padding: 8px 15px; cursor: pointer; font-size: 13px; color: #eee; display: flex; justify-content: space-between; }
+        .ctx-item { padding: 8px 15px; cursor: pointer; font-size: 13px; color: #eee; display: flex; justify-content: space-between; transition: 0.1s;}
         .ctx-item:hover { background: var(--primary-color); color: #282c34; }
         .ctx-divider { height: 1px; background: #4b5263; margin: 4px 0; }
 
@@ -202,40 +213,46 @@
         /* Editor */
         .editor-area { width: 100%; height: 100%; background: #1e1e1e; color: #d4d4d4; border: none; resize: none; padding: 10px; font-family: var(--font-code); font-size: 14px; line-height: 1.5; }
         .editor-toolbar { padding: 5px 10px; background: #252526; display: flex; gap: 10px; align-items: center; }
-        .editor-input { background: #3c3c3c; border: 1px solid #555; color: white; padding: 2px 5px; border-radius: 3px; font-family: var(--font-code); flex: 1; }
+        .editor-input { background: #3c3c3c; border: 1px solid #555; color: white; padding: 4px 8px; border-radius: 3px; font-family: var(--font-code); flex: 1; }
         
         /* Browser */
         .browser-layout { display: flex; flex-direction: column; height: 100%; background: #fff; }
         .browser-bar { padding: 8px; background: #f0f0f0; display: flex; gap: 5px; border-bottom: 1px solid #ccc; }
-        .browser-url { flex: 1; border-radius: 20px; border: 1px solid #ccc; padding: 5px 15px; outline: none; font-size: 13px; }
+        .browser-url { flex: 1; border-radius: 20px; border: 1px solid #ccc; padding: 5px 15px; outline: none; font-size: 13px; color: #333; }
         .browser-frame { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
 
         /* Camera & Video */
         .camera-container { width: 100%; height: 100%; background: #000; position: relative; display: flex; flex-direction: column; }
         video { width: 100%; flex: 1; object-fit: contain; }
         .camera-controls { padding: 15px; display: flex; justify-content: center; gap: 20px; background: rgba(0,0,0,0.8); }
-        .cam-btn { width: 50px; height: 50px; border-radius: 50%; border: 3px solid #fff; background: transparent; cursor: pointer; }
+        .cam-btn { width: 50px; height: 50px; border-radius: 50%; border: 3px solid #fff; background: transparent; cursor: pointer; transition: 0.2s; }
+        .cam-btn:hover { transform: scale(1.1); }
         .cam-btn.record { background: #ff0000; border-color: #ff0000; }
         .cam-btn.photo { background: #fff; }
 
         /* Paint */
         .paint-layout { display: flex; flex-direction: column; height: 100%; background: #ccc; }
-        .paint-tools { padding: 5px; background: #f0f0f0; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #999; flex-wrap: wrap; }
+        .paint-tools { padding: 5px; background: #f0f0f0; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #999; flex-wrap: wrap; color: #333; }
         .paint-canvas { background: #fff; cursor: crosshair; display: block; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
 
         /* Terminal */
         .terminal-bg { background: #0c0c0c; color: #cccccc; font-family: 'Consolas', monospace; padding: 10px; height: 100%; overflow-y: auto; font-size: 14px; }
         .term-line { margin-bottom: 2px; }
-        .term-prompt { color: #98c379; margin-right: 5px; }
+        .term-prompt { color: #98c379; margin-right: 5px; font-weight: bold; }
 
         /* Gallery */
         .gallery-layout { display: flex; flex-direction: column; height: 100%; padding: 10px; overflow-y: auto; }
         .gallery-section { margin-bottom: 20px; }
         .gallery-header { font-weight: bold; color: var(--primary-color); border-bottom: 1px solid #444; margin-bottom: 10px; padding-bottom: 5px; }
 
+        /* Settings */
+        .settings-layout { padding: 20px; color: #fff; overflow-y: auto; height: 100%; }
+        .settings-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        .settings-card h4 { margin-top: 0; color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;}
+
         /* --- UTILS --- */
-        .btn-ui { padding: 5px 10px; background: var(--primary-color); border: none; border-radius: 4px; color: #282c34; cursor: pointer; font-weight: 600; font-size: 12px; }
-        .btn-ui:hover { opacity: 0.9; }
+        .btn-ui { padding: 6px 12px; background: var(--primary-color); border: none; border-radius: 4px; color: #282c34; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.2s;}
+        .btn-ui:hover { opacity: 0.9; transform: translateY(-1px); }
         
         /* Toast Notification */
         #toast-container { position: fixed; bottom: 60px; right: 20px; z-index: 20000; display: flex; flex-direction: column; gap: 10px; }
@@ -247,31 +264,31 @@
 <body oncontextmenu="return false;">
 
     <div id="login-screen">
-        <h1 style="color:white; font-family: 'JetBrains Mono'; margin-bottom: 30px;">Dev</h1>
+        <h1 style="color:white; font-family: 'JetBrains Mono'; margin-bottom: 30px; font-size: 48px; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">DevOS</h1>
         <div class="login-box">
-            <h3 style="color:#aaa; margin-bottom: 20px;">Selecione o Usuário</h3>
+            <h3 style="color:#aaa; margin-bottom: 20px; font-weight: normal;">Selecione o Usuário</h3>
             <div class="user-option" onclick="login('admin')">
                 <div class="user-img">AD</div>
                 <div style="text-align: left; color: white;">
-                    <div>Administrador</div>
-                    <div style="font-size: 11px; color: #aaa;">Acesso Total</div>
+                    <div style="font-weight: 600;">Administrador</div>
+                    <div style="font-size: 11px; color: #aaa;">Acesso Total ao Sistema</div>
                 </div>
             </div>
             <div class="user-option" onclick="login('guest')">
                 <div class="user-img" style="background: #98c379;">VS</div>
                 <div style="text-align: left; color: white;">
-                    <div>Visitante</div>
-                    <div style="font-size: 11px; color: #aaa;">Somente Leitura</div>
+                    <div style="font-weight: 600;">Visitante</div>
+                    <div style="font-size: 11px; color: #aaa;">Somente Leitura / Teste</div>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="boot-screen" style="display:none;">
-        <div style="font-size: 32px; font-weight: bold; letter-spacing: 2px;">DEV</div>
-        <div style="margin-top: 5px; font-size: 12px; color: #666;">Servidor Local Iniciado...</div>
+        <div style="font-size: 36px; font-weight: bold; letter-spacing: 4px; text-shadow: 0 0 10px rgba(97, 175, 239, 0.5);">DEV OS</div>
+        <div style="margin-top: 10px; font-size: 12px; color: #666;">Kernel Versão 3.0.1 Platinum Ultimate</div>
         <div class="loader-bar"><div class="loader-progress" id="boot-bar"></div></div>
-        <div id="boot-status" style="margin-top: 15px; font-size: 12px; color: #888;">Inicializando Kernel...</div>
+        <div id="boot-status" style="margin-top: 15px; font-size: 12px; color: #888;">Montando unidades virtuais...</div>
     </div>
 
     <div id="desktop">
@@ -284,13 +301,13 @@
             <div class="user-avatar" id="start-avatar">AD</div>
             <div>
                 <div style="font-weight: bold; color: #fff;" id="start-username">Admin User</div>
-                <div style="font-size: 11px; color: #aaa;">Dev</div>
+                <div style="font-size: 11px; color: #aaa;">Sessão Local - DevOS</div>
             </div>
         </div>
         <div class="start-body" id="start-list">
         </div>
         <div class="start-footer">
-            <button class="power-btn" onclick="location.reload()">⏻ Sair / Reiniciar</button>
+            <button class="power-btn" onclick="location.reload()">⏻ Fazer Logoff / Reiniciar</button>
         </div>
     </div>
 
@@ -301,9 +318,9 @@
         <div class="task-list" id="task-list">
         </div>
         <div class="tray">
-            <span id="network-status">📶</span>
-            <span id="sound-status">🔊</span>
-            <div style="text-align: right; line-height: 1.1;">
+            <span id="network-status" title="Conectado à Internet">📶</span>
+            <span id="sound-status" title="Volume do Sistema">🔊</span>
+            <div style="text-align: right; line-height: 1.1; margin-left: 10px;">
                 <div id="clock-time" style="font-weight: bold;">00:00</div>
                 <div id="clock-date" style="font-size: 10px; color: #aaa;">00/00/0000</div>
             </div>
@@ -311,11 +328,14 @@
     </div>
 
     <div id="context-menu">
-        <div class="ctx-item" onclick="createWindow('editor')">Novo Arquivo de Texto</div>
-        <div class="ctx-item" onclick="createWindow('explorer')">Abrir Explorador</div>
+        <div class="ctx-item" onclick="createWindow('editor')">📝 Novo Arquivo de Texto</div>
+        <div class="ctx-item" onclick="createWindow('explorer')">📁 Abrir Explorador</div>
         <div class="ctx-divider"></div>
-        <div class="ctx-item" onclick="createWindow('trash')">Esvaziar Lixeira</div>
-        <div class="ctx-item" onclick="changeWallpaper()">Trocar Papel de Parede</div>
+        <div class="ctx-item" onclick="createWindow('terminal')">💻 Abrir Terminal Aqui</div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" onclick="emptyTrashFromContext()">🗑️ Esvaziar Lixeira</div>
+        <div class="ctx-item" onclick="changeWallpaper()">🖼️ Trocar Papel de Parede</div>
+        <div class="ctx-item" onclick="createWindow('settings')">⚙️ Configurações de Exibição</div>
     </div>
 
     <div id="toast-container"></div>
@@ -325,39 +345,31 @@
         const sysConfig = {
             apps: [
                 { id: 'explorer', name: 'Arquivos', icon: '📁', type: 'explorer' },
-                { id: 'browser', name: 'Navegador', icon: '🌐', type: 'browser' },
+                { id: 'browser', name: 'Navegador Web', icon: '🌐', type: 'browser' },
                 { id: 'camera', name: 'Câmera Pro', icon: '📸', type: 'camera' },
-                { id: 'gallery', name: 'Galeria', icon: '🖼️', type: 'gallery' },
-                { id: 'recorder', name: 'Gravador', icon: '🎤', type: 'recorder' },
-                { id: 'paint', name: 'Paint', icon: '🎨', type: 'paint' },
+                { id: 'gallery', name: 'Galeria Mídia', icon: '🖼️', type: 'gallery' },
+                { id: 'recorder', name: 'Gravador de Voz', icon: '🎤', type: 'recorder' },
+                { id: 'paint', name: 'Paint Studio', icon: '🎨', type: 'paint' },
                 { id: 'editor', name: 'Code Editor', icon: '📝', type: 'editor' },
-                { id: 'terminal', name: 'Terminal', icon: '💻', type: 'terminal' },
+                { id: 'terminal', name: 'Terminal Shell', icon: '💻', type: 'terminal' },
                 { id: 'trash', name: 'Lixeira', icon: '🗑️', type: 'trash' },
-                { id: 'settings', name: 'Ajustes', icon: '⚙️', type: 'settings' }
+                { id: 'settings', name: 'Painel de Controle', icon: '⚙️', type: 'settings' }
             ],
             wallpapers: [
-    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072',
-    'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=2070',
-    'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070',
-    "https://wallpapers.com/images/high/aesthetic-computer-4k-zdh4qu5bvkokfi56.webp",
-    "https://wallpapers.com/images/high/aesthetic-computer-4k-tiykjap13144jghd.webp",
-    "https://wallpapers.com/images/high/aesthetic-computer-4k-2o1einarkegqjjj5.webp",
-    "https://wallpapers.com/images/high/aesthetic-computer-4k-lxt7iuha7vqd8tck.webp",
-    "https://wallpapers.com/images/high/aesthetic-computer-4k-bn4syklw2p8qu3n5.webp",
-    "https://wallpapers.com/images/high/rio-de-janeiro-praia-do-forte-d3di4c346dpslj8f.webp",
-    "https://wallpapers.com/images/high/magical-night-sky-with-stars-glowing-on-forest-odhlf3pbxuyevoam.webp",
-    // --- NOVOS ADICIONADOS ---
-    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2070", // Vale das Montanhas
-    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2071", // Floresta verdejante
-    "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=2070", // Montanha Escura
-    "https://images.unsplash.com/photo-1502657877623-f66bf489d236?q=80&w=2069", // Minimalista Noturno
-    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070", // Tecnologia Retro
-    "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1983", // Carro Esportivo Dark
-    "https://images.unsplash.com/photo-1511447333015-45b65e57f63b?q=80&w=2055", // Galáxia Abstrata (Roxo/Azul)
-    "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?q=80&w=2070", // Casa de Lago Suíça
-    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070", // Paisagem Costeira
-    "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2070"  // Montanhas Estreladas
-]
+                'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072',
+                'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=2070',
+                'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070',
+                "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2070",
+                "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2071",
+                "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=2070",
+                "https://images.unsplash.com/photo-1502657877623-f66bf489d236?q=80&w=2069",
+                "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070",
+                "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1983",
+                "https://images.unsplash.com/photo-1511447333015-45b65e57f63b?q=80&w=2055",
+                "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?q=80&w=2070",
+                "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070",
+                "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2070" 
+            ]
         };
 
         // GLOBAL STATE
@@ -370,6 +382,9 @@
         let mediaRecorder = null;
         let mediaChunks = [];
         let globalStream = null;
+        
+        let audioRecorder = null;
+        let audioChunks = [];
 
         // --- DATABASE (IndexedDB) ---
         function initDB() {
@@ -383,8 +398,8 @@
                         store.createIndex('type', 'type', { unique: false });
                         store.createIndex('deleted', 'deleted', { unique: false });
                         
-                        store.add({ name: 'Bem-Vindo.txt', content: '=====================================================\n    BEM-VINDO AO DEVOS PLATINUM ULTIMATE EDITION\n=====================================================\n\nSaudações, usuário. \n\nVocê acaba de inicializar o ambiente DevOS, um sistema operacional simulado de alta performance.\n\n--- O QUE VOCÊ PODE FAZER AQUI? ---\n\n1. EXPLORADOR DE ARQUIVOS (📁): Gerencie seus documentos e mídias.\n2. CÂMERA PRO (📸): Capture fotos e vídeos reais.\n3. CODE EDITOR (📝): Escreva e execute códigos HTML em tempo real.\n4. TERMINAL (💻): Comandos de sistema para controle avançado.\n5. GRAVADOR (🎤): Grave áudios e salve-os na galeria.\n6. PAINT (🎨): Ferramenta completa de desenho.\n\n--- DICAS RÁPIDAS ---\n- Use o botão direito no desktop para trocar o papel de parede.\n- Seus arquivos ficam salvos no cache do navegador.\n\nExplore, crie e divirta-se!\n\nAtenciosamente,\ncuran.', type: 'txt', deleted: false });
-                        
+                        store.add({ name: 'Bem-Vindo.txt', content: '=====================================================\n    BEM-VINDO AO DEVOS PLATINUM ULTIMATE EDITION\n=====================================================\n\nSaudações, usuário. \n\nVocê acaba de inicializar o ambiente DevOS, um sistema operacional simulado de alta performance no navegador.\n\n--- O QUE VOCÊ PODE FAZER AQUI? ---\n\n1. EXPLORADOR DE ARQUIVOS (📁): Gerencie seus documentos e mídias persitentes no IndexedDB.\n2. CÂMERA PRO (📸): Capture fotos e vídeos reais usando sua webcam.\n3. CODE EDITOR (📝): Escreva e execute códigos HTML/JS em tempo real.\n4. TERMINAL (💻): Comandos de sistema para controle avançado (ex: ls, rm, mkdir, echo).\n5. GRAVADOR (🎤): Grave áudios e salve-os diretamente na galeria.\n6. PAINT (🎨): Ferramenta completa de desenho com gravação de processo em vídeo.\n7. PAINEL DE CONTROLE (⚙️): Ajustes avançados do sistema e monitoramento simulado de hardware.\n\n--- DICAS RÁPIDAS ---\n- Use o botão direito no desktop para acessar atalhos rápidos.\n- Arraste as bordas inferiores direitas para redimensionar janelas livremente.\n- Seus arquivos não serão perdidos ao atualizar a página (ficam salvos localmente).\n\nExplore, crie e divirta-se!\n\nAtenciosamente,\nDevOS System Architecture.', type: 'txt', deleted: false });
+                        store.add({ name: 'Exemplo_Web.html', content: '<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody { font-family: sans-serif; background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #333; }\n.box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); text-align: center; }\n</style>\n</head>\n<body>\n<div class="box">\n<h1>Olá Mundo!</h1>\n<p>Este é um código HTML renderizado dentro do DevOS.</p>\n<button onclick="alert(\'Funciona perfeitamente!\')">Clique Aqui</button>\n</div>\n</body>\n</html>', type: 'html', deleted: false });
                     }
                 };
 
@@ -392,19 +407,20 @@
                     db = e.target.result;
                     resolve(db);
                 };
-                request.onerror = (e) => reject('Erro no DB');
+                request.onerror = (e) => reject('Erro no Banco de Dados: ' + e.target.errorCode);
             });
         }
 
         function dbSaveFile(file) {
             return new Promise((resolve, reject) => {
                 if(currentUser === 'guest') {
-                    showToast('Erro', 'Visitantes não podem salvar arquivos.');
+                    showToast('Permissão Negada', 'Usuários Visitantes não possuem privilégios de gravação no disco.');
                     return reject('Permissão negada');
                 }
                 const tx = db.transaction(['files'], 'readwrite');
                 const store = tx.objectStore('files');
                 file.deleted = file.deleted || false;
+                file.timestamp = Date.now();
                 store.put(file);
                 tx.oncomplete = () => resolve();
                 tx.onerror = () => reject();
@@ -425,11 +441,15 @@
 
         function dbDeleteFile(name, permanent = false) {
             return new Promise((resolve, reject) => {
-                if(currentUser === 'guest') return reject();
+                if(currentUser === 'guest') {
+                    showToast('Permissão Negada', 'Visitantes não podem excluir arquivos.');
+                    return reject();
+                }
                 const tx = db.transaction(['files'], 'readwrite');
                 const store = tx.objectStore('files');
-                if(permanent) store.delete(name);
-                else {
+                if(permanent) {
+                    store.delete(name);
+                } else {
                     store.get(name).onsuccess = (e) => {
                         const file = e.target.result;
                         if(file) { file.deleted = true; store.put(file); }
@@ -453,7 +473,10 @@
 
         function dbEmptyTrash() {
              return new Promise((resolve) => {
-                if(currentUser === 'guest') return resolve();
+                if(currentUser === 'guest') {
+                    showToast('Permissão Negada', 'Visitantes não podem esvaziar a lixeira.');
+                    return resolve();
+                }
                 const tx = db.transaction(['files'], 'readwrite');
                 const store = tx.objectStore('files');
                 const request = store.getAll();
@@ -472,12 +495,15 @@
             document.getElementById('boot-screen').style.display = 'flex';
             
             const avatar = userType === 'admin' ? 'AD' : 'VS';
-            const name = userType === 'admin' ? 'Admin User' : 'Visitante';
+            const name = userType === 'admin' ? 'Administrador' : 'Visitante';
             document.getElementById('start-avatar').innerText = avatar;
             document.getElementById('start-avatar').style.background = userType === 'admin' ? '#61afef' : '#98c379';
             document.getElementById('start-username').innerText = name;
 
-            initDB().then(() => { runBootSequence(); });
+            initDB().then(() => { runBootSequence(); }).catch(e => {
+                document.getElementById('boot-status').innerText = 'FALHA CRÍTICA: ' + e;
+                document.getElementById('boot-status').style.color = 'red';
+            });
         }
 
         function runBootSequence() {
@@ -485,19 +511,24 @@
             const bar = document.getElementById('boot-bar');
             const status = document.getElementById('boot-status');
             const interval = setInterval(() => {
-                width += Math.random() * 8;
+                width += Math.random() * 12;
                 if(width > 100) width = 100;
                 bar.style.width = width + '%';
-                if(width > 30) status.innerText = "Carregando Filesystem...";
-                if(width > 90) status.innerText = "Iniciando Interface Gráfica...";
+                
+                if(width > 15) status.innerText = "Carregando Módulos de Kernel...";
+                if(width > 40) status.innerText = "Montando Filesystem VFS...";
+                if(width > 70) status.innerText = "Inicializando Interface Gráfica DWM...";
+                if(width > 90) status.innerText = "Iniciando Serviços de Rede...";
+                
                 if(width === 100) {
                     clearInterval(interval);
+                    status.innerText = "Sistema Pronto.";
                     setTimeout(() => {
                         document.getElementById('boot-screen').style.display = 'none';
                         initDesktop();
-                    }, 500);
+                    }, 600);
                 }
-            }, 80);
+            }, 100);
         }
 
         function initDesktop() {
@@ -506,7 +537,8 @@
             renderStartMenu();
             document.getElementById('desktop').style.backgroundImage = `url('${sysConfig.wallpapers[0]}')`;
 
-            document.addEventListener('click', (e) => {
+            // Configurar fechamento de menus por clique fora
+            document.addEventListener('mousedown', (e) => {
                 const startMenu = document.getElementById('start-menu');
                 const startBtn = document.getElementById('start-btn');
                 const ctxMenu = document.getElementById('context-menu');
@@ -515,19 +547,34 @@
                     startMenu.style.display = 'none';
                     startBtn.classList.remove('active');
                 }
-                ctxMenu.style.display = 'none';
-                if(e.target.id === 'desktop') document.querySelectorAll('.icon').forEach(i => i.classList.remove('selected'));
+                
+                if(!ctxMenu.contains(e.target)) {
+                    ctxMenu.style.display = 'none';
+                }
+                
+                if(e.target.id === 'desktop') {
+                    document.querySelectorAll('.icon').forEach(i => i.classList.remove('selected'));
+                }
             });
 
             document.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                const ctx = document.getElementById('context-menu');
-                ctx.style.display = 'block';
-                ctx.style.left = e.clientX + 'px';
-                ctx.style.top = e.clientY + 'px';
+                if(e.target.id === 'desktop' || e.target.classList.contains('desktop-icons-container')) {
+                    e.preventDefault();
+                    const ctx = document.getElementById('context-menu');
+                    ctx.style.display = 'block';
+                    
+                    // Ajustar posição para não sair da tela
+                    let x = e.clientX;
+                    let y = e.clientY;
+                    if(x + 220 > window.innerWidth) x = window.innerWidth - 220;
+                    if(y + 200 > window.innerHeight) y = window.innerHeight - 200;
+                    
+                    ctx.style.left = x + 'px';
+                    ctx.style.top = y + 'px';
+                }
             });
 
-            showToast('Sistema Pronto', `Logado como ${currentUser === 'admin' ? 'Administrador' : 'Visitante'}`);
+            showToast('Sistema Inicializado', `Sessão iniciada como ${currentUser === 'admin' ? 'Administrador' : 'Visitante'}. Bem-vindo ao DevOS.`);
         }
 
         // --- RENDERERS ---
@@ -544,7 +591,34 @@
                     el.classList.add('selected');
                 };
                 el.ondblclick = () => createWindow(app.id);
-                el.onmousedown = (e) => initDrag(e, el, true);
+                // Permite arrastar os ícones pela área de trabalho
+                let isDraggingIcon = false;
+                el.onmousedown = (e) => {
+                    e.stopPropagation();
+                    let shiftX = e.clientX - el.getBoundingClientRect().left;
+                    let shiftY = e.clientY - el.getBoundingClientRect().top;
+                    
+                    const moveAt = (pageX, pageY) => {
+                        el.style.position = 'absolute';
+                        el.style.left = pageX - shiftX + 'px';
+                        el.style.top = pageY - shiftY + 'px';
+                        el.style.zIndex = 1000;
+                    };
+                    
+                    const onMouseMove = (ev) => {
+                        isDraggingIcon = true;
+                        moveAt(ev.pageX, ev.pageY);
+                    };
+                    
+                    document.addEventListener('mousemove', onMouseMove);
+                    
+                    el.onmouseup = () => {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        el.onmouseup = null;
+                        if(isDraggingIcon) { el.classList.remove('selected'); isDraggingIcon = false; }
+                    };
+                };
+                el.ondragstart = () => false;
                 container.appendChild(el);
             });
         }
@@ -559,6 +633,7 @@
                 item.onclick = () => {
                     createWindow(app.id);
                     document.getElementById('start-menu').style.display = 'none';
+                    document.getElementById('start-btn').classList.remove('active');
                 };
                 list.appendChild(item);
             });
@@ -584,10 +659,14 @@
 
         // --- WINDOW MANAGEMENT ---
         function createWindow(appId, fileData = null) {
-            const app = sysConfig.apps.find(a => a.id === appId) || {name: 'Visualizador', icon: '📄', type: 'viewer'};
+            const app = sysConfig.apps.find(a => a.id === appId) || {name: 'Visualizador de Arquivos', icon: '📄', type: 'viewer'};
             const id = 'win_' + Date.now();
-            const x = 100 + (Math.random() * 50);
-            const y = 50 + (Math.random() * 50);
+            
+            // Cascading window placement
+            const winCount = Object.keys(windows).length;
+            const offset = (winCount * 30) % 300;
+            const x = 100 + offset;
+            const y = 50 + offset;
 
             const win = document.createElement('div');
             win.className = 'window active-window';
@@ -599,22 +678,23 @@
             win.style.zIndex = ++zIndexCounter;
 
             win.innerHTML = `
-                <div class="title-bar" onmousedown="initDrag(event, document.getElementById('${id}'))">
+                <div class="title-bar" onmousedown="initDrag(event, document.getElementById('${id}'))" ondblclick="maximizeWindow('${id}')">
                     <div class="title-text">${app.icon} ${fileData ? fileData.name : app.name}</div>
                     <div class="window-controls">
-                        <button class="win-btn btn-min" onclick="minimizeWindow('${id}')"></button>
-                        <button class="win-btn btn-max" onclick="maximizeWindow('${id}')"></button>
-                        <button class="win-btn btn-close" onclick="closeWindow('${id}')"></button>
+                        <button class="win-btn btn-min" onclick="minimizeWindow('${id}')" title="Minimizar"></button>
+                        <button class="win-btn btn-max" onclick="maximizeWindow('${id}')" title="Maximizar / Restaurar"></button>
+                        <button class="win-btn btn-close" onclick="closeWindow('${id}')" title="Fechar"></button>
                     </div>
                 </div>
                 <div class="window-content">${getAppContent(app.type, id, fileData)}</div>
+                <div class="resizer" onmousedown="initResize(event, '${id}')"></div>
             `;
             
             win.addEventListener('mousedown', () => activateWindow(id));
             document.getElementById('desktop').appendChild(win);
             
             windows[id] = { element: win, minimized: false, maximized: false, prevRect: null, eraser: false, paintRecorder: null, paintChunks: [] };
-            addTaskbarItem(id, app.name, app.icon);
+            addTaskbarItem(id, fileData ? fileData.name : app.name, app.icon);
             activateWindow(id);
 
             initAppLogic(app.type, id, fileData);
@@ -623,8 +703,11 @@
         function closeWindow(id) {
             const win = document.getElementById(id);
             if(win) {
+                // Parar streams de vídeo se a janela de câmera for fechada
                 const vid = win.querySelector('video');
-                if(vid && vid.srcObject) vid.srcObject.getTracks().forEach(track => track.stop());
+                if(vid && vid.srcObject) {
+                    vid.srcObject.getTracks().forEach(track => track.stop());
+                }
                 win.remove();
             }
             delete windows[id];
@@ -643,14 +726,19 @@
             const win = document.getElementById(id);
             const state = windows[id];
             if(state.maximized) {
+                win.style.transition = '0.2s all';
                 win.style.width = state.prevRect.width;
                 win.style.height = state.prevRect.height;
                 win.style.top = state.prevRect.top;
                 win.style.left = state.prevRect.left;
+                setTimeout(() => { win.style.transition = 'none'; }, 200);
                 state.maximized = false;
             } else {
                 state.prevRect = { width: win.style.width, height: win.style.height, top: win.style.top, left: win.style.left };
-                win.style.top = '0'; win.style.left = '0'; win.style.width = '100%'; win.style.height = 'calc(100vh - 45px)';
+                win.style.transition = '0.2s all';
+                win.style.top = '0'; win.style.left = '0'; 
+                win.style.width = '100%'; win.style.height = 'calc(100vh - 45px)';
+                setTimeout(() => { win.style.transition = 'none'; }, 200);
                 state.maximized = true;
             }
         }
@@ -662,6 +750,7 @@
                 if(task) task.classList.remove('active');
             }
             const win = document.getElementById(id);
+            if(!win) return;
             if(windows[id].minimized) { win.style.display = 'flex'; windows[id].minimized = false; }
             win.style.zIndex = ++zIndexCounter;
             win.classList.add('active-window');
@@ -674,12 +763,51 @@
             const item = document.createElement('div');
             item.className = 'task-item active';
             item.id = 'task_' + id;
-            item.innerHTML = `${icon} ${name}`;
+            item.innerHTML = `${icon} <span style="margin-left:4px; text-overflow:ellipsis; overflow:hidden;">${name}</span>`;
             item.onclick = () => {
                 if(activeWindowId === id && !windows[id].minimized) minimizeWindow(id);
                 else activateWindow(id);
             };
             document.getElementById('task-list').appendChild(item);
+        }
+
+        function initResize(e, id) {
+            e.stopPropagation();
+            const win = document.getElementById(id);
+            if(windows[id].maximized) return; // Não redimensionar se maximizado
+
+            let startX = e.clientX;
+            let startY = e.clientY;
+            let startWidth = parseInt(document.defaultView.getComputedStyle(win).width, 10);
+            let startHeight = parseInt(document.defaultView.getComputedStyle(win).height, 10);
+
+            const doDrag = (e) => {
+                let newWidth = startWidth + e.clientX - startX;
+                let newHeight = startHeight + e.clientY - startY;
+                
+                // Set minimum dimensions
+                if(newWidth < 350) newWidth = 350;
+                if(newHeight < 250) newHeight = 250;
+                
+                win.style.width = newWidth + 'px';
+                win.style.height = newHeight + 'px';
+                
+                // Dispara resize na canvas do paint se existir
+                const canvas = document.getElementById(`canvas_${id}`);
+                if(canvas) {
+                    // Aqui a logica poderia redimensionar o canvas realimentando os dados,
+                    // mas por segurança e simplificação mantemos tamanho do elemento fixo 
+                    // e container flexivel, ou escalamos via CSS. O DevOS original tem tamanho fixo 800x600.
+                }
+            };
+
+            const stopDrag = () => {
+                document.documentElement.removeEventListener('mousemove', doDrag);
+                document.documentElement.removeEventListener('mouseup', stopDrag);
+            };
+
+            document.documentElement.addEventListener('mousemove', doDrag);
+            document.documentElement.addEventListener('mouseup', stopDrag);
         }
 
         // --- APP CONTENT ---
@@ -689,29 +817,30 @@
                     return `
                         <div class="explorer-layout">
                             <div class="explorer-toolbar">
-                                <button class="btn-ui" onclick="createWindow('editor')">+ Novo Arquivo</button>
+                                <button class="btn-ui" onclick="createWindow('editor')">📝 Novo Arquivo</button>
                                 <button class="btn-ui" onclick="refreshExplorer('${id}')">↻ Recarregar</button>
+                                <span style="margin-left:auto; color:#ccc; font-size:12px; align-self:center;">C:\\Users\\${currentUser}\\Documents</span>
                             </div>
-                            <div class="explorer-main" id="exp_main_${id}">Carregando...</div>
+                            <div class="explorer-main" id="exp_main_${id}">Carregando sistema de arquivos...</div>
                         </div>`;
                 case 'trash':
                     return `
                         <div class="explorer-layout">
                             <div class="explorer-toolbar" style="background:#3e2020;">
-                                <button class="btn-ui" style="background:var(--danger-color); color:white;" onclick="emptyTrash('${id}')">🗑️ Esvaziar</button>
+                                <button class="btn-ui" style="background:var(--danger-color); color:white;" onclick="emptyTrash('${id}')">🗑️ Esvaziar Tudo</button>
                                 <button class="btn-ui" onclick="refreshTrash('${id}')">↻ Recarregar</button>
                             </div>
-                            <div class="explorer-main" id="trash_main_${id}">Carregando lixeira...</div>
+                            <div class="explorer-main" id="trash_main_${id}">Lendo registros...</div>
                         </div>`;
                 case 'editor':
                     const content = fileData ? fileData.content : '';
-                    const name = fileData ? fileData.name : 'novo_arquivo.txt';
+                    const name = fileData ? fileData.name : 'novo_codigo.html';
                     return `
                         <div style="display:flex; flex-direction:column; height:100%;">
                             <div class="editor-toolbar">
                                 <input id="ed_name_${id}" class="editor-input" value="${name}">
-                                <button class="btn-ui" onclick="saveFile('${id}')">Salvar</button>
-                                <button class="btn-ui" onclick="runCode('${id}')">Executar HTML</button>
+                                <button class="btn-ui" onclick="saveFile('${id}')">💾 Salvar</button>
+                                <button class="btn-ui" onclick="runCode('${id}')">▶ Executar HTML/JS</button>
                             </div>
                             <textarea id="ed_area_${id}" class="editor-area" spellcheck="false">${content}</textarea>
                         </div>`;
@@ -719,10 +848,11 @@
                     return `
                         <div class="browser-layout">
                             <div class="browser-bar">
-                                <input class="browser-url" id="url_${id}" placeholder="Pesquise ou digite URL..." onkeydown="if(event.key=='Enter') loadURL('${id}')">
-                                <button class="btn-ui" onclick="loadURL('${id}')">Ir</button>
+                                <button class="btn-ui" onclick="document.getElementById('frame_${id}').src=document.getElementById('frame_${id}').src">↻</button>
+                                <input class="browser-url" id="url_${id}" placeholder="Pesquise no Bing ou digite uma URL e pressione Enter..." onkeydown="if(event.key=='Enter') loadURL('${id}')">
+                                <button class="btn-ui" onclick="loadURL('${id}')">Acessar</button>
                             </div>
-                            <iframe id="frame_${id}" class="browser-frame" src="https://www.bing.com" sandbox="allow-forms allow-scripts allow-same-origin allow-presentation"></iframe>
+                            <iframe id="frame_${id}" class="browser-frame" src="https://www.bing.com" sandbox="allow-forms allow-scripts allow-same-origin allow-presentation allow-popups"></iframe>
                         </div>`;
                 case 'camera':
                     return `
@@ -737,17 +867,17 @@
                     return `
                         <div class="paint-layout">
                             <div class="paint-tools">
-                                <label style="font-size:11px;">Cor:</label>
-                                <input type="color" id="p_color_${id}" value="#000000">
-                                <label style="font-size:11px;">Espessura:</label>
+                                <label style="font-size:12px; font-weight:bold;">Cor:</label>
+                                <input type="color" id="p_color_${id}" value="#000000" style="cursor:pointer;">
+                                <label style="font-size:12px; font-weight:bold;">Pincel:</label>
                                 <input type="range" id="p_size_${id}" min="1" max="50" value="5" title="Tamanho">
-                                <button class="btn-ui" onclick="toggleEraser('${id}')" id="btn_eraser_${id}" title="Alternar Borracha/Lápis">✏️</button>
+                                <button class="btn-ui" onclick="toggleEraser('${id}')" id="btn_eraser_${id}" title="Alternar Borracha/Lápis">✏️ Pincel</button>
                                 <div style="width:1px; height:20px; background:#999; margin:0 5px;"></div>
-                                <button class="btn-ui" id="btn_rec_paint_${id}" onclick="togglePaintRecording('${id}')" title="Gravar Processo">🎥 Gravar</button>
-                                <button class="btn-ui" onclick="savePaintImage('${id}')" title="Salvar Imagem">💾 Foto</button>
-                                <button class="btn-ui" onclick="clearPaint('${id}')" title="Limpar Tela">🗑️</button>
+                                <button class="btn-ui" id="btn_rec_paint_${id}" onclick="togglePaintRecording('${id}')" title="Gravar Processo">🎥 Gravar Video</button>
+                                <button class="btn-ui" onclick="savePaintImage('${id}')" title="Salvar Imagem">💾 Exportar</button>
+                                <button class="btn-ui" onclick="clearPaint('${id}')" title="Limpar Tela" style="background:#e06c75; color:white;">🗑️ Limpar</button>
                             </div>
-                            <div style="position:relative; flex:1; overflow:hidden; background:#ccc; display:flex; justify-content:center; align-items:center;">
+                            <div style="position:relative; flex:1; overflow:auto; background:#888; display:flex; justify-content:center; align-items:center;">
                                 <canvas id="canvas_${id}" width="800" height="600" class="paint-canvas"></canvas>
                             </div>
                         </div>`;
@@ -755,45 +885,68 @@
                     return `
                         <div class="gallery-layout">
                             <div class="gallery-section">
-                                <div class="gallery-header">Galeria Multimídia</div>
-                                <div class="explorer-main" id="gal_content_${id}" style="height:auto; min-height:100px;">Carregando...</div>
+                                <div class="gallery-header">Galeria de Mídias (Fotos, Vídeos, Áudios)</div>
+                                <div class="explorer-main" id="gal_content_${id}" style="height:auto; min-height:100px;">Buscando mídia...</div>
                             </div>
                         </div>`;
                 case 'viewer':
-                    if(!fileData) return '<div style="padding:20px">Erro.</div>';
+                    if(!fileData) return '<div style="padding:20px; color:white;">Arquivo não encontrado ou corrompido.</div>';
                     if(fileData.type === 'jpg' || fileData.type === 'png') 
-                         return `<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#000;"><img src="${fileData.content}" style="max-width:100%;max-height:100%;"></div>`;
+                         return `<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#111;"><img src="${fileData.content}" style="max-width:100%;max-height:100%; box-shadow: 0 0 20px rgba(0,0,0,0.8);"></div>`;
                     if(fileData.type === 'webm') 
-                        return `<video src="${fileData.content}" controls style="width:100%;height:100%;background:#000;"></video>`;
+                        return `<video src="${fileData.content}" controls autoplay style="width:100%;height:100%;background:#000;"></video>`;
                     if(fileData.type === 'wav') 
-                        return `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;"><div style="font-size:50px;">🎵</div><h3>${fileData.name}</h3><audio src="${fileData.content}" controls></audio></div>`;
+                        return `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column; background:#282c34; color:white;"><div style="font-size:80px; margin-bottom:20px; text-shadow: 0 5px 15px rgba(0,0,0,0.5);">🎵</div><h3 style="margin-bottom:30px;">${fileData.name}</h3><audio src="${fileData.content}" controls style="width:80%;"></audio></div>`;
                     return `<iframe srcdoc="${fileData.content.replace(/"/g, '&quot;')}" style="width:100%;height:100%;border:none;background:#fff;"></iframe>`;
                 case 'recorder':
                     return `
-                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px;">
-                  <div style="font-size:60px;">🎙️</div>
-                            <div id="rec_status_${id}">Pronto para gravar</div>
-                            <button id="audio_rec_btn_${id}" class="btn-ui" style="padding:10px 20px; font-size:16px;" onclick="toggleAudioRecord('${id}')">Iniciar Gravação</button>
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px; background:#1e2227; color:white;">
+                            <div style="font-size:80px; filter: drop-shadow(0 0 10px rgba(97, 175, 239, 0.5));">🎙️</div>
+                            <div id="rec_status_${id}" style="font-size:18px; font-weight:bold;">Pronto para gravar o ambiente</div>
+                            <div style="font-size:12px; color:#aaa; margin-bottom: 20px;">Permita o acesso ao microfone no seu navegador.</div>
+                            <button id="audio_rec_btn_${id}" class="btn-ui" style="padding:15px 30px; font-size:18px; border-radius:30px; box-shadow: 0 5px 15px rgba(0,0,0,0.4);" onclick="toggleAudioRecord('${id}')">Iniciar Gravação</button>
                         </div>`;
                 case 'terminal':
                     return `
-                        <div class="terminal-bg" id="term_out_${id}">
-                            <div>DevOS Terminal [Kernel 3.0]</div><br>
-                            <div class="term-line" style="display:flex;"><span class="term-prompt">root@devos:~$</span><input class="term-in" id="term_in_${id}" style="background:transparent;border:none;color:white;flex:1;font-family:inherit;" onkeydown="handleTerminal(event, '${id}')"></div>
+                        <div class="terminal-bg" id="term_out_${id}" onclick="document.getElementById('term_in_${id}').focus()">
+                            <div style="color:var(--primary-color);">DevOS Terminal System [Kernel 3.0.1 Platinum]</div>
+                            <div style="color:#888;">(c) DevOS Corporation. Todos os direitos reservados. Digite 'help' para comandos.</div><br>
+                            <div class="term-line" style="display:flex;"><span class="term-prompt">root@devos:~$</span><input class="term-in" id="term_in_${id}" style="background:transparent;border:none;color:#fff;flex:1;font-family:inherit;font-size:14px;outline:none;" onkeydown="handleTerminal(event, '${id}')" autocomplete="off"></div>
                         </div>`;
                 case 'settings':
                     return `
-                        <div style="padding:20px; color:#fff;">
-                            <h3>Configurações</h3>
-                            <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:5px; margin-bottom:10px;">
-                                <label>Brilho</label>
-                                <input type="range" min="30" max="100" value="100" style="width:100%" oninput="document.body.style.filter = 'brightness('+this.value+'%)'">
+                        <div class="settings-layout">
+                            <h2 style="margin-top:0; border-bottom: 2px solid var(--primary-color); padding-bottom:10px;">Painel de Controle DevOS</h2>
+                            
+                            <div class="settings-card">
+                                <h4>🖥️ Sistema</h4>
+                                <div style="display:grid; grid-template-columns: 120px 1fr; gap:10px; font-size:14px; color:#ccc;">
+                                    <strong>SO:</strong> <span>DevOS Platinum Ultimate Edition</span>
+                                    <strong>Kernel:</strong> <span>3.0.1-virtual</span>
+                                    <strong>Usuário:</strong> <span>${currentUser === 'admin' ? 'Administrador Root' : 'Visitante Limitado'}</span>
+                                    <strong>Processador:</strong> <span>Simulated WebCore CPU @ 3.2GHz</span>
+                                    <strong>Memória RAM:</strong> <span>8192 MB Virtual</span>
+                                </div>
                             </div>
-                             <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:5px;">
-                                <button class="btn-ui" style="background:#e06c75; color:white; width:100%;" onclick="resetFactory()">Resetar Sistema</button>
+
+                            <div class="settings-card">
+                                <h4>⚙️ Personalização</h4>
+                                <div style="margin-bottom:15px;">
+                                    <label style="display:block; margin-bottom:5px;">Ajuste de Brilho do Monitor</label>
+                                    <input type="range" min="20" max="100" value="100" style="width:100%; cursor:pointer;" oninput="document.getElementById('desktop').style.filter = 'brightness('+this.value+'%)'">
+                                </div>
+                                <div>
+                                    <button class="btn-ui" onclick="changeWallpaper()">Trocar Papel de Parede da Área de Trabalho</button>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-card">
+                                <h4>💾 Armazenamento / Disco Virtual</h4>
+                                <div id="storage_info_${id}" style="font-size:14px; color:#ccc; margin-bottom:15px;">Calculando espaço em disco...</div>
+                                <button class="btn-ui" style="background:var(--danger-color); color:white; font-weight:bold;" onclick="resetFactory()">⚠️ Formatação de Baixo Nível (Reset de Fábrica)</button>
                             </div>
                         </div>`;
-                default: return '<div>App não suportado.</div>';
+                default: return '<div style="padding:20px; color:white;">Aplicativo não suportado ou erro de execução.</div>';
             }
         }
 
@@ -804,7 +957,32 @@
             if(type === 'gallery') refreshGallery(id);
             if(type === 'paint') initPaintCanvas(id);
             if(type === 'camera') initCamera(id);
-            if(type === 'terminal') document.getElementById(`term_in_${id}`).focus();
+            if(type === 'terminal') {
+                setTimeout(() => {
+                    const input = document.getElementById(`term_in_${id}`);
+                    if(input) input.focus();
+                }, 100);
+            }
+            if(type === 'settings') loadSettingsData(id);
+        }
+
+        // --- SETTINGS LOGIC ---
+        async function loadSettingsData(id) {
+            const el = document.getElementById(`storage_info_${id}`);
+            if(!el) return;
+            const files = await dbGetFiles(false);
+            const trashFiles = await dbGetFiles(true);
+            const totalFiles = files.length + trashFiles.length;
+            
+            // Simular cálculo de tamanho (muito básico)
+            let simulatedBytes = totalFiles * 1024 * 45; // simulando ~45kb por arquivo em média
+            let sizeStr = (simulatedBytes / 1024 / 1024).toFixed(2) + ' MB';
+            
+            el.innerHTML = `
+                <div><strong>Arquivos totais no disco:</strong> ${totalFiles}</div>
+                <div><strong>Arquivos na lixeira:</strong> ${trashFiles.length}</div>
+                <div><strong>Uso de cache estimado:</strong> ${sizeStr}</div>
+            `;
         }
 
         // --- FILE SYSTEM ---
@@ -813,7 +991,7 @@
             if(!container) return;
             container.innerHTML = '';
             const files = await dbGetFiles(false);
-            if(files.length === 0) { container.innerHTML = '<div style="width:100%; text-align:center; margin-top:20px; color:#666;">Vazio</div>'; return; }
+            if(files.length === 0) { container.innerHTML = '<div style="width:100%; text-align:center; margin-top:20px; color:#666;">O diretório está vazio.</div>'; return; }
 
             files.forEach(file => {
                 const el = document.createElement('div');
@@ -825,12 +1003,18 @@
                 if(file.type === 'wav') icon = '🎵';
                 if(file.type === 'exe') icon = '🚀';
 
-                el.innerHTML = `<div class="file-icon">${icon}</div><div class="file-name">${file.name}</div>`;
+                el.innerHTML = `<div class="file-icon">${icon}</div><div class="file-name" title="${file.name}">${file.name}</div>`;
                 el.ondblclick = () => openFile(file);
                 el.oncontextmenu = (e) => {
                     e.preventDefault();
-                    if(confirm(`Mover ${file.name} para a Lixeira?`)) {
-                        dbDeleteFile(file.name).then(() => refreshExplorer(id));
+                    if(confirm(`Você tem certeza que deseja mover o arquivo '${file.name}' para a Lixeira?`)) {
+                        dbDeleteFile(file.name).then(() => {
+                            refreshExplorer(id);
+                            Object.keys(windows).forEach(winId => {
+                                if(windows[winId].element.innerHTML.includes('explorer-main')) refreshExplorer(winId);
+                                if(windows[winId].element.innerHTML.includes('trash_main')) refreshTrash(winId);
+                            });
+                        });
                     }
                 };
                 container.appendChild(el);
@@ -842,51 +1026,68 @@
             if(!container) return;
             container.innerHTML = '';
             const files = await dbGetFiles(true);
-            if(files.length === 0) { container.innerHTML = '<div style="width:100%; text-align:center; margin-top:20px; color:#666;">Lixeira Vazia</div>'; return; }
+            if(files.length === 0) { container.innerHTML = '<div style="width:100%; text-align:center; margin-top:20px; color:#666;">A Lixeira está vazia.</div>'; return; }
 
             files.forEach(file => {
                 const el = document.createElement('div');
                 el.className = 'file-item';
-                el.style.opacity = '0.7';
-                el.innerHTML = `<div class="file-icon">🗑️</div><div class="file-name">${file.name}</div>`;
+                el.style.opacity = '0.6';
+                el.innerHTML = `<div class="file-icon">🗑️</div><div class="file-name" title="${file.name}">${file.name}</div>`;
                 el.oncontextmenu = (e) => {
                     e.preventDefault();
-                    if(confirm(`Restaurar ${file.name}?`)) dbRestoreFile(file.name).then(() => refreshTrash(id));
+                    if(confirm(`Deseja restaurar '${file.name}' para sua pasta original?`)) {
+                        dbRestoreFile(file.name).then(() => refreshTrash(id));
+                    }
                 };
                 container.appendChild(el);
             });
         }
 
         async function emptyTrash(id) {
-            if(confirm('Isso apagará permanentemente os arquivos.')) {
+            if(confirm('Atenção: Esvaziar a lixeira apagará permanentemente todos os arquivos contidos nela. Deseja continuar?')) {
                 await dbEmptyTrash();
-                refreshTrash(id);
+                if(id) refreshTrash(id);
+                showToast('Lixeira', 'Os arquivos foram removidos permanentemente.');
             }
+        }
+        
+        function emptyTrashFromContext() {
+            emptyTrash(null);
+            Object.keys(windows).forEach(winId => {
+                if(windows[winId].element.innerHTML.includes('trash_main')) refreshTrash(winId);
+            });
         }
 
         function openFile(file) {
             if(file.type === 'exe') {
                 try { const safeEval = new Function(file.content); safeEval(); } 
-                catch(e) { showToast('Erro EXE', e.message); }
+                catch(e) { showToast('Erro de Execução (EXE)', e.message); }
                 return;
             }
-            if(['txt', 'html'].includes(file.type)) createWindow('editor', file);
+            if(['txt', 'html', 'js', 'css'].includes(file.type)) createWindow('editor', file);
             else createWindow('viewer', file);
         }
 
         function saveFile(id) {
-            const name = document.getElementById(`ed_name_${id}`).value;
+            const name = document.getElementById(`ed_name_${id}`).value.trim();
             const content = document.getElementById(`ed_area_${id}`).value;
-            const type = name.split('.').pop();
-            dbSaveFile({ name, content, type }).then(() => {
-                showToast('Salvo', 'Arquivo gravado.');
-                Object.keys(windows).forEach(winId => refreshExplorer(winId));
+            if(!name) { showToast('Erro', 'Nome do arquivo inválido'); return; }
+            
+            let type = name.split('.').pop().toLowerCase();
+            if(!name.includes('.')) { type = 'txt'; document.getElementById(`ed_name_${id}`).value = name + '.txt'; }
+
+            dbSaveFile({ name: document.getElementById(`ed_name_${id}`).value, content, type }).then(() => {
+                showToast('Arquivo Salvo', 'O disco registrou as alterações com sucesso.');
+                Object.keys(windows).forEach(winId => {
+                    if(windows[winId].element.innerHTML.includes('explorer-main')) refreshExplorer(winId);
+                });
             });
         }
 
         function runCode(id) {
             const content = document.getElementById(`ed_area_${id}`).value;
-            createWindow('viewer', { name: 'Preview', content: content, type: 'html' });
+            const nameInput = document.getElementById(`ed_name_${id}`).value;
+            createWindow('viewer', { name: 'Preview: ' + nameInput, content: content, type: 'html' });
         }
 
         // --- BROWSER ---
@@ -894,33 +1095,38 @@
             const urlInput = document.getElementById(`url_${id}`).value;
             const frame = document.getElementById(`frame_${id}`);
             let url = urlInput.trim();
+            if(!url) return;
             const isUrl = /^(http|https):\/\/[^ "]+$/.test(url) || /^www\.[^ "]+$/.test(url) || (url.includes('.') && !url.includes(' '));
             if(isUrl) { if(!url.startsWith('http')) url = 'https://' + url; } 
             else { url = 'https://www.bing.com/search?q=' + encodeURIComponent(url); }
             frame.src = url;
+            document.getElementById(`url_${id}`).value = url;
         }
 
-        // --- PAINT FEATURES (NEW) ---
+        // --- PAINT FEATURES ---
         function initPaintCanvas(id) {
             const canvas = document.getElementById(`canvas_${id}`);
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
             
-            // Set white background explicit
+            // Fundo branco inicial
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             let painting = false;
             
-            const start = () => painting = true;
-            const end = () => { painting = false; ctx.beginPath(); };
+            const startPosition = (e) => { painting = true; draw(e); };
+            const finishedPosition = () => { painting = false; ctx.beginPath(); };
             const draw = (e) => {
                 if(!painting) return;
                 const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const x = (e.clientX - rect.left) * scaleX;
+                const y = (e.clientY - rect.top) * scaleY;
                 
                 ctx.lineWidth = document.getElementById(`p_size_${id}`).value;
                 ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
 
                 if (windows[id].eraser) {
                     ctx.strokeStyle = "#ffffff";
@@ -934,17 +1140,24 @@
                 ctx.moveTo(x, y);
             };
 
-            canvas.addEventListener('mousedown', start);
-            canvas.addEventListener('mouseup', end);
+            canvas.addEventListener('mousedown', startPosition);
+            canvas.addEventListener('mouseup', finishedPosition);
             canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseleave', end);
+            canvas.addEventListener('mouseleave', finishedPosition);
         }
 
         function toggleEraser(id) {
             windows[id].eraser = !windows[id].eraser;
             const btn = document.getElementById(`btn_eraser_${id}`);
-            btn.innerHTML = windows[id].eraser ? '🧽' : '✏️';
-            btn.style.background = windows[id].eraser ? '#e06c75' : '';
+            if(windows[id].eraser){
+                btn.innerHTML = '🧽 Borracha';
+                btn.style.background = '#e06c75';
+                btn.style.color = '#fff';
+            } else {
+                btn.innerHTML = '✏️ Pincel';
+                btn.style.background = 'var(--primary-color)';
+                btn.style.color = '#282c34';
+            }
         }
 
         function clearPaint(id) {
@@ -956,10 +1169,14 @@
 
         function savePaintImage(id) {
             const canvas = document.getElementById(`canvas_${id}`);
-            const dataUrl = canvas.toDataURL('image/jpeg');
-            const fileName = `Arte_${Date.now()}.jpg`;
-            dbSaveFile({ name: fileName, content: dataUrl, type: 'jpg' }).then(() => {
-                showToast('Imagem Salva', fileName + ' na Galeria.');
+            const dataUrl = canvas.toDataURL('image/png');
+            const fileName = `Arte_Paint_${Date.now()}.png`;
+            dbSaveFile({ name: fileName, content: dataUrl, type: 'png' }).then(() => {
+                showToast('Exportação Concluída', fileName + ' foi salvo na Galeria.');
+                Object.keys(windows).forEach(winId => {
+                    if(windows[winId].element.innerHTML.includes('gal_content_')) refreshGallery(winId);
+                    if(windows[winId].element.innerHTML.includes('explorer-main')) refreshExplorer(winId);
+                });
             });
         }
 
@@ -968,15 +1185,20 @@
             const btn = document.getElementById(`btn_rec_paint_${id}`);
             
             if (windows[id].paintRecorder && windows[id].paintRecorder.state === 'recording') {
-                // STOP RECORDING
+                // Parar Gravação
                 windows[id].paintRecorder.stop();
-                btn.innerHTML = "🎥 Gravar";
-                btn.style.background = "";
+                btn.innerHTML = "🎥 Gravar Video";
+                btn.style.background = "var(--primary-color)";
+                btn.style.color = "#282c34";
             } else {
-                // START RECORDING
+                // Iniciar Gravação
                 const stream = canvas.captureStream(30); // 30 FPS
                 windows[id].paintChunks = [];
-                windows[id].paintRecorder = new MediaRecorder(stream);
+                try {
+                    windows[id].paintRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                } catch(e) {
+                    windows[id].paintRecorder = new MediaRecorder(stream);
+                }
                 
                 windows[id].paintRecorder.ondataavailable = (e) => {
                     if (e.data.size > 0) windows[id].paintChunks.push(e.data);
@@ -989,15 +1211,19 @@
                     reader.onloadend = () => {
                         const fileName = `Speedpaint_${Date.now()}.webm`;
                         dbSaveFile({ name: fileName, content: reader.result, type: 'webm' }).then(() => {
-                            showToast('Vídeo Salvo', fileName + ' salvo.');
+                            showToast('Vídeo Finalizado', fileName + ' renderizado e salvo.');
+                            Object.keys(windows).forEach(winId => {
+                                if(windows[winId].element.innerHTML.includes('gal_content_')) refreshGallery(winId);
+                            });
                         });
                     };
                 };
 
                 windows[id].paintRecorder.start();
-                btn.innerHTML = "⏹ Parar";
+                btn.innerHTML = "⏹ Parar Gravação";
                 btn.style.background = "red";
-                showToast('Gravando', 'Desenhando...');
+                btn.style.color = "white";
+                showToast('Gravação em Andamento', 'Tudo que for desenhado no canvas será gravado.');
             }
         }
 
@@ -1006,25 +1232,30 @@
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
                     const vid = document.getElementById(`vid_${id}`);
-                    if(vid) vid.srcObject = stream;
+                    if(vid) {
+                        vid.srcObject = stream;
+                        vid.muted = true; // Impede eco local
+                    }
                     globalStream = stream; 
                 })
                 .catch(err => {
                     const vid = document.getElementById(`vid_${id}`);
-                    if(vid) vid.parentElement.innerHTML = '<div style="color:white;text-align:center;padding-top:50px;">Erro: Câmera não detectada.</div>';
+                    if(vid) vid.parentElement.innerHTML = '<div style="color:white;text-align:center;padding-top:100px;font-size:16px;">Erro: WebCâmera ou Microfone não detectados ou permissão negada pelo navegador.</div>';
                 });
         }
 
         function takePhoto(id) {
             const vid = document.getElementById(`vid_${id}`);
-            if(!vid.srcObject) return;
+            if(!vid || !vid.srcObject) return;
             const canvas = document.createElement('canvas');
             canvas.width = vid.videoWidth;
             canvas.height = vid.videoHeight;
             canvas.getContext('2d').drawImage(vid, 0, 0);
-            const dataUrl = canvas.toDataURL('image/jpeg');
-            const fileName = `Foto_${Date.now()}.jpg`;
-            dbSaveFile({ name: fileName, content: dataUrl, type: 'jpg' }).then(() => showToast('Foto', 'Salva na Galeria.'));
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            const fileName = `Foto_Cam_${Date.now()}.jpg`;
+            dbSaveFile({ name: fileName, content: dataUrl, type: 'jpg' }).then(() => {
+                showToast('Obturador', 'A foto foi salva na Galeria e Meus Arquivos.');
+            });
         }
 
         function toggleRecord(id) {
@@ -1033,21 +1264,66 @@
                 mediaRecorder.stop();
                 btn.style.backgroundColor = 'transparent'; btn.style.borderColor = '#fff';
             } else {
-                if(!globalStream) return;
+                if(!globalStream) {
+                    showToast('Erro de Hardware', 'Nenhum fluxo de vídeo ativo para gravação.');
+                    return;
+                }
                 mediaChunks = [];
                 mediaRecorder = new MediaRecorder(globalStream);
-                mediaRecorder.ondataavailable = e => mediaChunks.push(e.data);
+                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) mediaChunks.push(e.data); };
                 mediaRecorder.onstop = () => {
                     const blob = new Blob(mediaChunks, { type: 'video/webm' });
                     const reader = new FileReader();
                     reader.readAsDataURL(blob);
                     reader.onloadend = () => {
-                        const fileName = `Video_${Date.now()}.webm`;
-                        dbSaveFile({ name: fileName, content: reader.result, type: 'webm' }).then(() => showToast('Vídeo', 'Salvo.'));
+                        const fileName = `Video_Cam_${Date.now()}.webm`;
+                        dbSaveFile({ name: fileName, content: reader.result, type: 'webm' }).then(() => {
+                            showToast('Vídeo Salvo', 'Sua gravação foi armazenada no disco rígido.');
+                        });
                     };
                 };
                 mediaRecorder.start();
                 btn.style.backgroundColor = 'red'; btn.style.borderColor = 'red';
+                showToast('Gravando', 'Iniciada gravação da webcam.');
+            }
+        }
+        
+        // --- AUDIO RECORDER ---
+        function toggleAudioRecord(id) {
+            const btn = document.getElementById(`audio_rec_btn_${id}`);
+            const status = document.getElementById(`rec_status_${id}`);
+            
+            if (audioRecorder && audioRecorder.state === 'recording') {
+                audioRecorder.stop();
+                btn.innerText = 'Iniciar Nova Gravação';
+                status.innerText = 'Pronto para gravar o ambiente';
+                btn.style.background = 'var(--primary-color)';
+                btn.style.color = '#282c34';
+            } else {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    audioChunks = [];
+                    audioRecorder = new MediaRecorder(stream);
+                    audioRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+                    audioRecorder.onstop = () => {
+                        const blob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(blob);
+                        reader.onloadend = () => {
+                            const fileName = `Audio_Mic_${Date.now()}.wav`;
+                            dbSaveFile({ name: fileName, content: reader.result, type: 'wav' }).then(() => {
+                                showToast('Áudio Processado', fileName + ' salvo na Galeria.');
+                                stream.getTracks().forEach(track => track.stop()); // Libera microfone
+                            });
+                        };
+                    };
+                    audioRecorder.start();
+                    btn.innerText = '⏹ Parar Gravação';
+                    btn.style.background = 'red';
+                    btn.style.color = 'white';
+                    status.innerText = 'Gravando áudio do microfone...';
+                }).catch(err => {
+                    showToast('Falha no Dispositivo', 'Microfone não detectado ou permissão negada pelo usuário.');
+                });
             }
         }
 
@@ -1057,41 +1333,93 @@
             if(!container) return;
             container.innerHTML = '';
             const files = await dbGetFiles(false);
-            const mediaFiles = files.filter(f => ['jpg','png','webm'].includes(f.type));
-            if(mediaFiles.length===0) {container.innerHTML = 'Vazio'; return;}
+            const mediaFiles = files.filter(f => ['jpg','png','webm', 'wav'].includes(f.type));
+            if(mediaFiles.length===0) {container.innerHTML = '<div style="color:#666;">Nenhuma mídia multimídia encontrada no disco.</div>'; return;}
 
             mediaFiles.forEach(file => {
                 const el = document.createElement('div');
                 el.className = 'file-item';
-                let icon = file.type === 'webm' ? '🎬' : '🖼️';
-                el.innerHTML = `<div class="file-icon">${icon}</div><div class="file-name">${file.name}</div>`;
+                let icon = '🖼️';
+                if(file.type === 'webm') icon = '🎬';
+                if(file.type === 'wav') icon = '🎵';
+                el.innerHTML = `<div class="file-icon">${icon}</div><div class="file-name" title="${file.name}">${file.name}</div>`;
                 el.ondblclick = () => openFile(file);
                 container.appendChild(el);
             });
         }
 
-        // --- UTILS ---
+        // --- TERMINAL LOGIC ---
         function handleTerminal(e, id) {
             if(e.key === 'Enter') {
                 const input = e.target;
                 const cmd = input.value.trim();
                 const out = document.getElementById(`term_out_${id}`);
+                
+                // Exibe o comando no histórico
                 const history = document.createElement('div');
                 history.innerHTML = `<span class="term-prompt">root@devos:~$</span> ${cmd}`;
                 out.insertBefore(history, input.parentElement);
                 
                 let response = '';
-                const parts = cmd.split(' ');
+                const parts = cmd.split(' ').filter(p => p !== '');
                 
-                switch(parts[0].toLowerCase()) {
-                    case 'help': response = 'Comandos: help, ls, clear, rm [arq], reboot, exit'; break;
-                    case 'ls': dbGetFiles().then(files => appendTermResponse(id, files.map(f => f.name).join('<br>'), input)); input.value = ''; return;
-                    case 'rm': if(parts[1]) { dbDeleteFile(parts[1]).then(()=>appendTermResponse(id,'Deletado',input)); } else response='Uso: rm [nome]'; break;
-                    case 'clear': out.innerHTML = `<div>DevOS Terminal</div><br><div class="term-line" style="display:flex;"><span class="term-prompt">root@devos:~$</span><input class="term-in" id="term_in_${id}" style="background:transparent;border:none;color:white;flex:1;" onkeydown="handleTerminal(event, '${id}')"></div>`; setTimeout(() => document.getElementById(`term_in_${id}`).focus(), 10); return;
-                    case 'reboot': location.reload(); break;
-                    case 'exit': closeWindow(id); return;
-                    default: response = `Erro: ${parts[0]}`;
+                if (parts.length > 0) {
+                    switch(parts[0].toLowerCase()) {
+                        case 'help': 
+                            response = 'Lista de comandos suportados:<br>&nbsp;&nbsp;help&nbsp;&nbsp;&nbsp;&nbsp;- Mostra este menu de ajuda<br>&nbsp;&nbsp;ls&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Lista arquivos do diretório virtual<br>&nbsp;&nbsp;rm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Remove um arquivo (ex: rm arquivo.txt)<br>&nbsp;&nbsp;mkdir&nbsp;&nbsp;&nbsp;- (Simulado) Cria pasta<br>&nbsp;&nbsp;echo&nbsp;&nbsp;&nbsp;&nbsp;- Exibe texto na tela<br>&nbsp;&nbsp;date&nbsp;&nbsp;&nbsp;&nbsp;- Exibe a data/hora atual<br>&nbsp;&nbsp;whoami&nbsp;&nbsp;- Exibe o usuário logado<br>&nbsp;&nbsp;clear&nbsp;&nbsp;&nbsp;- Limpa a tela do terminal<br>&nbsp;&nbsp;reboot&nbsp;&nbsp;- Reinicia o sistema DevOS<br>&nbsp;&nbsp;exit&nbsp;&nbsp;&nbsp;&nbsp;- Fecha o terminal'; 
+                            break;
+                        case 'ls': 
+                            dbGetFiles().then(files => {
+                                if(files.length === 0) {
+                                    appendTermResponse(id, '(diretório vazio)', input);
+                                } else {
+                                    const fileList = files.map(f => `<span style="color:${f.type==='exe'?'#e06c75':(f.type==='html'?'#61afef':'#abb2bf')}">${f.name}</span>`).join('&nbsp;&nbsp;&nbsp;&nbsp;');
+                                    appendTermResponse(id, fileList, input);
+                                }
+                            }); 
+                            input.value = ''; 
+                            return; // Retorno assíncrono
+                        case 'rm': 
+                            if(parts[1]) { 
+                                dbDeleteFile(parts[1]).then(()=> {
+                                    appendTermResponse(id,`Arquivo '${parts[1]}' removido com sucesso.`,input);
+                                }).catch(() => {
+                                    appendTermResponse(id,`Erro: Sem permissão ou arquivo não encontrado.`,input);
+                                });
+                            } else {
+                                response='Erro de sintaxe. Uso: rm [nome_do_arquivo]'; 
+                            }
+                            break;
+                        case 'mkdir':
+                            response = `Diretório '${parts[1] || 'novo'}' criado (Simulação em memória).`;
+                            break;
+                        case 'echo':
+                            response = parts.slice(1).join(' ');
+                            break;
+                        case 'date':
+                            response = new Date().toString();
+                            break;
+                        case 'whoami':
+                            response = currentUser === 'admin' ? 'root' : 'guest';
+                            break;
+                        case 'clear': 
+                            out.innerHTML = `
+                                <div style="color:var(--primary-color);">DevOS Terminal System [Kernel 3.0.1 Platinum]</div>
+                                <div style="color:#888;">(c) DevOS Corporation. Todos os direitos reservados. Digite 'help' para comandos.</div><br>
+                                <div class="term-line" style="display:flex;"><span class="term-prompt">root@devos:~$</span><input class="term-in" id="term_in_${id}" style="background:transparent;border:none;color:#fff;flex:1;font-family:inherit;font-size:14px;outline:none;" onkeydown="handleTerminal(event, '${id}')" autocomplete="off"></div>`; 
+                            setTimeout(() => document.getElementById(`term_in_${id}`).focus(), 10); 
+                            return;
+                        case 'reboot': 
+                            location.reload(); 
+                            break;
+                        case 'exit': 
+                            closeWindow(id); 
+                            return;
+                        default: 
+                            response = `bash: comando não encontrado: ${parts[0]}`;
+                    }
                 }
+                
                 if(response) appendTermResponse(id, response, input);
                 input.value = '';
                 out.scrollTop = out.scrollHeight;
@@ -1105,21 +1433,37 @@
             respEl.style.marginBottom = '10px';
             respEl.style.color = '#ccc';
             out.insertBefore(respEl, input.parentElement);
+            out.scrollTop = out.scrollHeight;
         }
 
-        function initDrag(e, el, isIcon = false) {
+        // --- UTILS ---
+        function initDrag(e, el) {
             if(el.classList.contains('window') && windows[el.id] && windows[el.id].maximized) return;
+            // Verifica se o clique foi nos botões de controle para não arrastar acidentalmente
+            if(e.target.classList.contains('win-btn') || e.target.classList.contains('window-controls')) return;
+            
+            activateWindow(el.id);
             let startX = e.clientX;
             let startY = e.clientY;
             let startLeft = el.offsetLeft;
             let startTop = el.offsetTop;
+            
             const move = (ev) => {
                 const dx = ev.clientX - startX;
                 const dy = ev.clientY - startY;
-                el.style.left = (startLeft + dx) + 'px';
-                el.style.top = (startTop + dy) + 'px';
+                let newX = startLeft + dx;
+                let newY = startTop + dy;
+                
+                // Limites superiores e esquerdos para não perder a janela
+                if (newY < 0) newY = 0; 
+                
+                el.style.left = newX + 'px';
+                el.style.top = newY + 'px';
             };
-            const stop = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); };
+            const stop = () => { 
+                document.removeEventListener('mousemove', move); 
+                document.removeEventListener('mouseup', stop); 
+            };
             document.addEventListener('mousemove', move);
             document.addEventListener('mouseup', stop);
         }
@@ -1128,9 +1472,13 @@
             const container = document.getElementById('toast-container');
             const el = document.createElement('div');
             el.className = 'toast';
-            el.innerHTML = `<div style="font-weight:bold; margin-bottom:5px;">${title}</div><div style="font-size:12px; color:#ccc;">${msg}</div>`;
+            el.innerHTML = `<div style="font-weight:bold; margin-bottom:5px;">${title}</div><div style="font-size:12px; color:#ccc; line-height:1.4;">${msg}</div>`;
             container.appendChild(el);
-            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 4000);
+            setTimeout(() => { 
+                el.style.transition = '0.3s opacity';
+                el.style.opacity = '0'; 
+                setTimeout(() => el.remove(), 300); 
+            }, 4500);
         }
 
         function changeWallpaper() {
@@ -1139,7 +1487,14 @@
         }
         
         function resetFactory() {
-            if(confirm('Isso apagará TUDO. Continuar?')) { indexedDB.deleteDatabase('DevOS_DB'); location.reload(); }
+            if(currentUser === 'guest') {
+                showToast('Acesso Negado', 'Somente o Administrador Root pode realizar formatação de baixo nível.');
+                return;
+            }
+            if(confirm('AVISO CRÍTICO: Isso destruirá a base de dados IndexedDB e todos os seus arquivos, fotos e configurações serão apagados permanentemente. Esta ação é IRREVERSÍVEL. Tem certeza absoluta que deseja resetar o DevOS?')) { 
+                indexedDB.deleteDatabase('DevOS_DB'); 
+                location.reload(); 
+            }
         }
     </script>
 </body>
